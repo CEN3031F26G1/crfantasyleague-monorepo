@@ -1,0 +1,41 @@
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+
+# Go binaries and build output
+/main
+/oauth.go
+/bin/
+/dist/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+
+# Test coverage and profiling
+*.out
+*.prof
+/coverage/
+coverage.html
+
+# Go workspace files (local development)
+go.work
+go.work.sum
+
+# Editor temporary files
+*.swp
+*.swo
+*~
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Keep go.mod and go.sum tracked.
+# Do not ignore vendor/ unless the project explicitly avoids vendoring.
