@@ -1,212 +1,243 @@
 package main
 
 import (
-	"net/http"
-
-	"fmt"
-	"log"
-	"os"
-	"time"
-
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/subtle"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"log"
+	"net/http"
+	"net/url"
+	"os"
+	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
-	"golang.org/x/oauth2"
-
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/golang-jwt/jwt/v5/request"
 	"github.com/joho/godotenv"
+	"golang.org/x/oauth2"
 )
 
+const (
+	sessionCookie = "crfl_session"
+	sessionTTL    = 12 * time.Hour
+)
+
+type sessionClaims struct {
+	Username   string `json:"username,omitempty"`
+	GlobalName string `json:"globalName,omitempty"`
+	AvatarURL  string `json:"avatarUrl,omitempty"`
+	jwt.RegisteredClaims
+}
+
+// Continue accepting bearer tokens for API clients, in addition to browser cookies.
 func AuthMiddleware(pub *rsa.PublicKey) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		tok, err := request.ParseFromRequest(
-			c.Request,
-			request.OAuth2Extractor,
-			func(t *jwt.Token) (interface{}, error) {
-				if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
-					return nil, fmt.Errorf("unexpected signing method")
-				}
-				return pub, nil
-			},
-			request.WithClaims(&jwt.RegisteredClaims{}),
-			request.WithParser(jwt.NewParser(
-				jwt.WithValidMethods([]string{"RS256"}),
-				jwt.WithIssuer("crfantasyleague"),
-				jwt.WithExpirationRequired(),
-			)),
-		)
-
-		if err != nil || !tok.Valid {
+		var raw string
+		if header := c.GetHeader("Authorization"); header != "" {
+			parts := strings.Fields(header)
+			if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
+				c.AbortWithStatus(http.StatusUnauthorized)
+				return
+			}
+			raw = parts[1]
+		} else {
+			raw, _ = c.Cookie(sessionCookie)
+		}
+		claims := &sessionClaims{}
+		tok, err := jwt.ParseWithClaims(raw, claims, func(t *jwt.Token) (interface{}, error) {
+			return pub, nil
+		}, jwt.WithValidMethods([]string{"RS256"}), jwt.WithIssuer("crfantasyleague"), jwt.WithExpirationRequired())
+		if err != nil || !tok.Valid || claims.Subject == "" {
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
-
-		claims := tok.Claims.(*jwt.RegisteredClaims)
-		if claims.Subject == "" {
-			c.AbortWithStatus(http.StatusUnauthorized)
-			return
-		}
-
 		c.Set("userID", claims.Subject)
+		c.Set("session", claims)
 		c.Next()
 	}
 }
 
-func main() {
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Fatal("Could not load environment variable file")
-	}
+type appConfig struct {
+	FrontendURL    string
+	SecureCookies  bool
+	DiscordUserURL string
+	OAuth          *oauth2.Config
+}
 
-	oauth_config := &oauth2.Config{
-		ClientID:     "1565415990093684767",
-		ClientSecret: os.Getenv("DISCORD_CLIENT_SECRET"),
-		RedirectURL:  "http://localhost:8080/auth/callback",
-		Scopes:       []string{"identify"},
-		Endpoint: oauth2.Endpoint{
-			AuthURL:  "https://discord.com/oauth2/authorize",
-			TokenURL: "https://discord.com/api/oauth2/token",
-		},
-	}
+func setCookie(c *gin.Context, name, value, path string, maxAge int, secure bool) {
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie(name, value, maxAge, path, "", secure, true)
+}
 
-	private_key_bytes, err := os.ReadFile("./private.pem")
-	if err != nil {
-		log.Fatal("Could not load private key: ", err)
-	}
-
-	private_key, err := jwt.ParseRSAPrivateKeyFromPEM(private_key_bytes)
-	if err != nil {
-		log.Fatal("Could not parse private key: ", err)
-	}
-
-	public_key := private_key.PublicKey
-
+func newRouter(config appConfig, key *rsa.PrivateKey) *gin.Engine {
 	r := gin.Default()
-
-	r.GET("/auth/callback", func(c *gin.Context) {
-		expected_state, err := c.Cookie("oauth_state")
-		
-		c.SetSameSite(http.SameSiteLaxMode)
-		c.SetCookie(
-			"oauth_state",
-			"",
-			-1,
-			"/auth/callback",
-			"",
-			false,
-			true,
-		)
-
-		state := c.Query("state")
-
-		if err != nil || state != expected_state {
-			c.String(http.StatusBadRequest, "Invalid OAuth state; please re-login!")
+	// Do not trust arbitrary X-Forwarded-* headers from the public internet.
+	_ = r.SetTrustedProxies(nil)
+	frontend := strings.TrimRight(config.FrontendURL, "/")
+	loginError := func(c *gin.Context, reason string) {
+		c.Redirect(http.StatusSeeOther, frontend+"/login?error="+url.QueryEscape(reason))
+	}
+	login := func(c *gin.Context) {
+		b := make([]byte, 32)
+		if _, err := rand.Read(b); err != nil {
+			loginError(c, "unavailable")
 			return
 		}
+		state := base64.RawURLEncoding.EncodeToString(b)
+		setCookie(c, "oauth_state", state, "/auth/callback", 300, config.SecureCookies)
+		c.Header("Cache-Control", "no-store")
+		c.Redirect(http.StatusFound, config.OAuth.AuthCodeURL(state))
+	}
+	r.GET("/login", login) // Keep the original backend login URL working.
+	r.GET("/auth/login", login)
 
-		code := c.Query("code")
-
-		if code == "" {
-			c.String(http.StatusUnauthorized, "Failed to login!")
+	r.GET("/auth/callback", func(c *gin.Context) {
+		c.Header("Cache-Control", "no-store")
+		expected, err := c.Cookie("oauth_state")
+		setCookie(c, "oauth_state", "", "/auth/callback", -1, config.SecureCookies)
+		state := c.Query("state")
+		if err != nil || expected == "" || state == "" || subtle.ConstantTimeCompare([]byte(state), []byte(expected)) != 1 {
+			loginError(c, "state")
+			return
+		}
+		if c.Query("error") != "" || c.Query("code") == "" {
+			loginError(c, "cancelled")
 			return
 		}
 
 		ctx := c.Request.Context()
-
-		oauth_token, err := oauth_config.Exchange(ctx, code)
+		token, err := config.OAuth.Exchange(ctx, c.Query("code"))
 		if err != nil {
-			c.String(http.StatusBadGateway, "Failed to exchange authorization code")
+			loginError(c, "unavailable")
 			return
 		}
-
-		client := oauth_config.Client(ctx, oauth_token)
-
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"https://discord.com/api/users/@me",
-			nil,
-		)
-
+		client := config.OAuth.Client(ctx, token)
+		client.Timeout = 15 * time.Second
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, config.DiscordUserURL, nil)
 		if err != nil {
-			c.String(http.StatusInternalServerError, "Failed to create user request")
+			loginError(c, "unavailable")
 			return
 		}
-
 		res, err := client.Do(req)
 		if err != nil {
-			c.String(http.StatusBadGateway, "Failed to fetch Discord user")
+			loginError(c, "unavailable")
 			return
 		}
 		defer res.Body.Close()
-
-		if res.StatusCode != http.StatusOK {
-			c.String(http.StatusBadGateway, "Discord rejected user request")
-			return
-		}
-
 		user := struct {
-			ID 			string `json:"id"`
-			Username 	string `json:"username"`
+			ID         string `json:"id"`
+			Username   string `json:"username"`
+			GlobalName string `json:"global_name"`
+			Avatar     string `json:"avatar"`
 		}{}
-
-		if err := json.NewDecoder(res.Body).Decode(&user); err != nil {
-			c.String(http.StatusBadGateway, "Failed to decode Discord response")
+		if res.StatusCode != http.StatusOK || json.NewDecoder(res.Body).Decode(&user) != nil || user.ID == "" {
+			loginError(c, "unavailable")
 			return
 		}
-
-		claims := jwt.RegisteredClaims {
-			Subject: user.ID,
-			Issuer: "crfantasyleague",
-			IssuedAt: jwt.NewNumericDate(time.Now()),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(5 * time.Minute)),
+		avatarURL := ""
+		if user.Avatar != "" {
+			avatarURL = fmt.Sprintf("https://cdn.discordapp.com/avatars/%s/%s.png?size=128", url.PathEscape(user.ID), url.PathEscape(user.Avatar))
 		}
-
-		jwt_token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-		signed, err := jwt_token.SignedString(private_key)
+		claims := sessionClaims{
+			Username: user.Username, GlobalName: user.GlobalName, AvatarURL: avatarURL,
+			RegisteredClaims: jwt.RegisteredClaims{
+				Subject: user.ID, Issuer: "crfantasyleague",
+				IssuedAt: jwt.NewNumericDate(time.Now()), ExpiresAt: jwt.NewNumericDate(time.Now().Add(sessionTTL)),
+			},
+		}
+		signed, err := jwt.NewWithClaims(jwt.SigningMethodRS256, claims).SignedString(key)
 		if err != nil {
-			log.Printf("Failed to sign JWT: %v", err)
-			c.String(http.StatusInternalServerError, "Failed to sign token")
+			loginError(c, "unavailable")
 			return
 		}
-
-		c.JSON(200, gin.H{"token": signed})
+		// The JWT never enters a URL or JavaScript-accessible storage.
+		setCookie(c, sessionCookie, signed, "/", int(sessionTTL.Seconds()), config.SecureCookies)
+		c.Redirect(http.StatusSeeOther, frontend+"/")
 	})
 
-	r.GET("/login", func(c *gin.Context) {
-		b := make([]byte, 32)
-		if _, err := rand.Read(b); err != nil {
-			c.String(http.StatusInternalServerError, "Failed to initialize OAuth login")
+	r.POST("/auth/logout", func(c *gin.Context) {
+		// Cookies authenticate requests automatically; require a trusted browser origin
+		// on this state-changing endpoint. Non-browser clients may omit Origin.
+		origin := c.GetHeader("Origin")
+		if origin != "" && origin != frontend {
+			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
-
-		state := base64.RawURLEncoding.EncodeToString(b)
-		c.SetSameSite(http.SameSiteLaxMode)
-		c.SetCookie(
-			"oauth_state",
-			state,
-			300,
-			"/auth/callback",
-			"",
-			false, // switch to true with HTTPS
-			true,
-		)
-
-		c.Redirect(http.StatusFound, oauth_config.AuthCodeURL(state))
+		if c.GetHeader("Sec-Fetch-Site") == "cross-site" {
+			c.AbortWithStatus(http.StatusForbidden)
+			return
+		}
+		c.Header("Cache-Control", "no-store")
+		setCookie(c, sessionCookie, "", "/", -1, config.SecureCookies)
+		c.Status(http.StatusNoContent)
 	})
-	
-	api_group := r.Group("/api")
-	api_group.Use(AuthMiddleware(&public_key))
 
-	api_group.GET("/me", func(c *(gin.Context)) {
-		c.JSON(http.StatusOK, gin.H {
-			"userID": c.GetString("userID"),
+	api := r.Group("/api")
+	api.Use(func(c *gin.Context) { c.Header("Cache-Control", "no-store"); c.Next() })
+	api.Use(AuthMiddleware(&key.PublicKey))
+	api.GET("/me", func(c *gin.Context) {
+		claims := c.MustGet("session").(*sessionClaims)
+		c.JSON(http.StatusOK, gin.H{
+			"userID": claims.Subject, "username": claims.Username,
+			"globalName": claims.GlobalName, "avatarUrl": claims.AvatarURL,
+			"expiresAt": claims.ExpiresAt.Time.UTC().Format(time.RFC3339),
 		})
 	})
+	return r
+}
 
-	r.Run()
+func envOr(key, fallback string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return fallback
+}
+
+func validOrigin(raw string) bool {
+	u, err := url.Parse(raw)
+	return err == nil && (u.Scheme == "http" || u.Scheme == "https") && u.Host != "" && u.User == nil && (u.Path == "" || u.Path == "/") && u.RawQuery == "" && u.Fragment == ""
+}
+
+func main() {
+	if err := godotenv.Load(".env"); err != nil && !errors.Is(err, os.ErrNotExist) {
+		log.Fatal("Could not load environment file: ", err)
+	}
+	if os.Getenv("DISCORD_CLIENT_SECRET") == "" {
+		log.Fatal("DISCORD_CLIENT_SECRET is required")
+	}
+	frontend := strings.TrimRight(envOr("FRONTEND_URL", "http://localhost:5173"), "/")
+	if !validOrigin(frontend) {
+		log.Fatal("FRONTEND_URL must be an http(s) origin without a path")
+	}
+	redirect := envOr("DISCORD_REDIRECT_URL", "http://localhost:8080/auth/callback")
+	callback, err := url.Parse(redirect)
+	if err != nil || callback.Host == "" || (callback.Scheme != "http" && callback.Scheme != "https") || callback.Path != "/auth/callback" || callback.User != nil || callback.RawQuery != "" || callback.Fragment != "" {
+		log.Fatal("DISCORD_REDIRECT_URL must be an http(s) URL ending in /auth/callback")
+	}
+	pem, err := os.ReadFile(envOr("JWT_PRIVATE_KEY_PATH", "./private.pem"))
+	if err != nil {
+		log.Fatal("Could not load private key: ", err)
+	}
+	key, err := jwt.ParseRSAPrivateKeyFromPEM(pem)
+	if err != nil {
+		log.Fatal("Could not parse private key: ", err)
+	}
+	// Bound OAuth exchange requests as well as Discord profile requests.
+	http.DefaultClient.Timeout = 15 * time.Second
+	r := newRouter(appConfig{
+		FrontendURL: frontend, SecureCookies: callback.Scheme == "https",
+		DiscordUserURL: "https://discord.com/api/users/@me",
+		OAuth: &oauth2.Config{
+			ClientID:     envOr("DISCORD_CLIENT_ID", "1565415990093684767"),
+			ClientSecret: os.Getenv("DISCORD_CLIENT_SECRET"), RedirectURL: redirect,
+			Scopes:   []string{"identify"},
+			Endpoint: oauth2.Endpoint{AuthURL: "https://discord.com/oauth2/authorize", TokenURL: "https://discord.com/api/oauth2/token"},
+		},
+	}, key)
+	server := &http.Server{Addr: ":" + envOr("PORT", "8080"), Handler: r, ReadHeaderTimeout: 10 * time.Second}
+	log.Fatal(server.ListenAndServe())
 }
