@@ -1,4 +1,4 @@
-module spxctre/oauth.go
+module crfantasyleague/backend
 
 go 1.26.0
 
