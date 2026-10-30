@@ -2,12 +2,14 @@ package main
 
 import (
 	"net/http"
-	"net/url"
 
+	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"crypto/rand"
+	"crypto/rsa"
 	"encoding/base64"
 	"encoding/json"
 
@@ -18,6 +20,41 @@ import (
 	"github.com/golang-jwt/jwt/v5/request"
 	"github.com/joho/godotenv"
 )
+
+func AuthMiddleware(pub *rsa.PublicKey) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		tok, err := request.ParseFromRequest(
+			c.Request,
+			request.OAuth2Extractor,
+			func(t *jwt.Token) (interface{}, error) {
+				if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
+					return nil, fmt.Errorf("unexpected signing method")
+				}
+				return pub, nil
+			},
+			request.WithClaims(&jwt.RegisteredClaims{}),
+			request.WithParser(jwt.NewParser(
+				jwt.WithValidMethods([]string{"RS256"}),
+				jwt.WithIssuer("crfantasyleague"),
+				jwt.WithExpirationRequired(),
+			)),
+		)
+
+		if err != nil || !tok.Valid {
+			c.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+
+		claims := tok.Claims.(*jwt.RegisteredClaims)
+		if claims.Subject == "" {
+			c.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+
+		c.Set("userID", claims.Subject)
+		c.Next()
+	}
+}
 
 func main() {
 	err := godotenv.Load(".env")
@@ -37,10 +74,16 @@ func main() {
 	}
 
 	private_key_bytes, err := os.ReadFile("./private.pem")
-	log.Fatal("Could not load private key: ", err)
+	if err != nil {
+		log.Fatal("Could not load private key: ", err)
+	}
 
 	private_key, err := jwt.ParseRSAPrivateKeyFromPEM(private_key_bytes)
-	log.Fatal("Could not parse private key: ", err)
+	if err != nil {
+		log.Fatal("Could not parse private key: ", err)
+	}
+
+	public_key := private_key.PublicKey
 
 	r := gin.Default()
 
@@ -62,6 +105,7 @@ func main() {
 
 		if err != nil || state != expected_state {
 			c.String(http.StatusBadRequest, "Invalid OAuth state; please re-login!")
+			return
 		}
 
 		code := c.Query("code")
@@ -73,13 +117,13 @@ func main() {
 
 		ctx := c.Request.Context()
 
-		token, err := oauth_config.Exchange(ctx, code)
+		oauth_token, err := oauth_config.Exchange(ctx, code)
 		if err != nil {
 			c.String(http.StatusBadGateway, "Failed to exchange authorization code")
 			return
 		}
 
-		client := oauth_config.Client(ctx, token)
+		client := oauth_config.Client(ctx, oauth_token)
 
 		req, err := http.NewRequestWithContext(
 			ctx,
@@ -107,7 +151,7 @@ func main() {
 
 		user := struct {
 			ID 			string `json:"id"`
-			Username 	string `username:"user"`
+			Username 	string `json:"username"`
 		}{}
 
 		if err := json.NewDecoder(res.Body).Decode(&user); err != nil {
@@ -115,7 +159,22 @@ func main() {
 			return
 		}
 
-		c.JSON(http.StatusOK, user)
+		claims := jwt.RegisteredClaims {
+			Subject: user.ID,
+			Issuer: "crfantasyleague",
+			IssuedAt: jwt.NewNumericDate(time.Now()),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(5 * time.Minute)),
+		}
+
+		jwt_token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+		signed, err := jwt_token.SignedString(private_key)
+		if err != nil {
+			log.Printf("Failed to sign JWT: %v", err)
+			c.String(http.StatusInternalServerError, "Failed to sign token")
+			return
+		}
+
+		c.JSON(200, gin.H{"token": signed})
 	})
 
 	r.GET("/login", func(c *gin.Context) {
@@ -138,6 +197,15 @@ func main() {
 		)
 
 		c.Redirect(http.StatusFound, oauth_config.AuthCodeURL(state))
+	})
+	
+	api_group := r.Group("/api")
+	api_group.Use(AuthMiddleware(&public_key))
+
+	api_group.GET("/me", func(c *(gin.Context)) {
+		c.JSON(http.StatusOK, gin.H {
+			"userID": c.GetString("userID"),
+		})
 	})
 
 	r.Run()
