@@ -15,8 +15,11 @@ import (
 	"strings"
 	"time"
 
+	"context"
+	"crfantasyleague/backend/database"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"golang.org/x/oauth2"
 )
@@ -66,6 +69,7 @@ type appConfig struct {
 	SecureCookies  bool
 	DiscordUserURL string
 	OAuth          *oauth2.Config
+	DB             *pgxpool.Pool
 }
 
 func setCookie(c *gin.Context, name, value, path string, maxAge int, secure bool) {
@@ -141,6 +145,22 @@ func newRouter(config appConfig, key *rsa.PrivateKey) *gin.Engine {
 		avatarURL := ""
 		if user.Avatar != "" {
 			avatarURL = fmt.Sprintf("https://cdn.discordapp.com/avatars/%s/%s.png?size=128", url.PathEscape(user.ID), url.PathEscape(user.Avatar))
+		}
+		if config.DB != nil {
+			err := database.SaveDiscordUser(
+				ctx,
+				config.DB,
+				user.ID,
+				user.Username,
+				user.GlobalName,
+				avatarURL,
+			)
+
+			if err != nil {
+				log.Printf("Failed to save Discord user: %v", err)
+				loginError(c, "unavailable")
+				return
+			}
 		}
 		claims := sessionClaims{
 			Username: user.Username, GlobalName: user.GlobalName, AvatarURL: avatarURL,
@@ -226,10 +246,33 @@ func main() {
 	if err != nil {
 		log.Fatal("Could not parse private key: ", err)
 	}
+
+	//connect to PostgreSQL
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	db, err := database.Connect(ctx, os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Fatal("Failed to connect to PostgreSQL: ", err)
+	}
+	defer db.Close()
+
+	log.Println("Connected to PostgreSQL successfully!")
+
+	// Test reading from the users table
+	var userCount int
+
+	err = db.QueryRow(ctx, "SELECT COUNT(*) FROM users").Scan(&userCount)
+	if err != nil {
+		log.Fatal("Failed to query users table: ", err)
+	}
+
+	log.Printf("Total users in database: %d", userCount)
+
 	// Bound OAuth exchange requests as well as Discord profile requests.
 	http.DefaultClient.Timeout = 15 * time.Second
 	r := newRouter(appConfig{
-		FrontendURL: frontend, SecureCookies: callback.Scheme == "https",
+		DB: db, FrontendURL: frontend, SecureCookies: callback.Scheme == "https",
 		DiscordUserURL: "https://discord.com/api/users/@me",
 		OAuth: &oauth2.Config{
 			ClientID:     envOr("DISCORD_CLIENT_ID", "1565415990093684767"),

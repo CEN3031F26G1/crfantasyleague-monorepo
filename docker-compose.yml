@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: crfl-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: crfl
+      POSTGRES_PASSWORD: crfl_dev_password
+      POSTGRES_DB: crfantasyleague
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
