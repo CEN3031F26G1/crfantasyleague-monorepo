@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/subtle"
@@ -15,8 +16,8 @@ import (
 	"strings"
 	"time"
 
-	"context"
 	"crfantasyleague/backend/database"
+
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -119,6 +120,7 @@ func newRouter(config appConfig, key *rsa.PrivateKey) *gin.Engine {
 			loginError(c, "unavailable")
 			return
 		}
+
 		client := config.OAuth.Client(ctx, token)
 		client.Timeout = 15 * time.Second
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, config.DiscordUserURL, nil)
@@ -194,6 +196,42 @@ func newRouter(config appConfig, key *rsa.PrivateKey) *gin.Engine {
 		c.Header("Cache-Control", "no-store")
 		setCookie(c, sessionCookie, "", "/", -1, config.SecureCookies)
 		c.Status(http.StatusNoContent)
+	})
+
+	//Retrieve professional players
+	r.GET("/api/players", func(c *gin.Context) {
+		players, err := database.GetPlayers(
+			c.Request.Context(),
+			config.DB,
+		)
+
+		if err != nil {
+			log.Printf("Failed to retrieve players: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to retrieve players",
+			})
+			return
+		}
+
+		//Format response
+		result := make([]gin.H, 0, len(players))
+
+		for _, player := range players {
+			result = append(result, gin.H{
+				"id":            player.ExternalID,
+				"name":          player.Name,
+				"country":       player.Country,
+				"countryCode":   player.CountryCode,
+				"qualification": player.Qualification,
+				"route":         player.Route,
+				"bio":           player.Bio,
+				"image":         player.ImageURL,
+				"source":        player.SourceURL,
+				"imageSource":   player.ImageSourceURL,
+			})
+		}
+
+		c.JSON(http.StatusOK, result)
 	})
 
 	api := r.Group("/api")

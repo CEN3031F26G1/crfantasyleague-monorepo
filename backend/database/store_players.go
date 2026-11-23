@@ -8,7 +8,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// Player represents a professional Clash Royale player.
+//represents a professional Clash Royale player
 type Player struct {
 	ID             int64
 	ExternalID     string
