@@ -1,0 +1,3 @@
+ALTER TABLE players
+ADD COLUMN IF NOT EXISTS source_url TEXT,
+ADD COLUMN IF NOT EXISTS image_source_url TEXT;

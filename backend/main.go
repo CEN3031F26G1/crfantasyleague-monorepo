@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/subtle"
@@ -15,8 +16,11 @@ import (
 	"strings"
 	"time"
 
+	"crfantasyleague/backend/database"
+
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"golang.org/x/oauth2"
 )
@@ -66,6 +70,7 @@ type appConfig struct {
 	SecureCookies  bool
 	DiscordUserURL string
 	OAuth          *oauth2.Config
+	DB             *pgxpool.Pool
 }
 
 func setCookie(c *gin.Context, name, value, path string, maxAge int, secure bool) {
@@ -115,6 +120,7 @@ func newRouter(config appConfig, key *rsa.PrivateKey) *gin.Engine {
 			loginError(c, "unavailable")
 			return
 		}
+
 		client := config.OAuth.Client(ctx, token)
 		client.Timeout = 15 * time.Second
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, config.DiscordUserURL, nil)
@@ -141,6 +147,22 @@ func newRouter(config appConfig, key *rsa.PrivateKey) *gin.Engine {
 		avatarURL := ""
 		if user.Avatar != "" {
 			avatarURL = fmt.Sprintf("https://cdn.discordapp.com/avatars/%s/%s.png?size=128", url.PathEscape(user.ID), url.PathEscape(user.Avatar))
+		}
+		if config.DB != nil {
+			err := database.SaveDiscordUser(
+				ctx,
+				config.DB,
+				user.ID,
+				user.Username,
+				user.GlobalName,
+				avatarURL,
+			)
+
+			if err != nil {
+				log.Printf("Failed to save Discord user: %v", err)
+				loginError(c, "unavailable")
+				return
+			}
 		}
 		claims := sessionClaims{
 			Username: user.Username, GlobalName: user.GlobalName, AvatarURL: avatarURL,
@@ -174,6 +196,42 @@ func newRouter(config appConfig, key *rsa.PrivateKey) *gin.Engine {
 		c.Header("Cache-Control", "no-store")
 		setCookie(c, sessionCookie, "", "/", -1, config.SecureCookies)
 		c.Status(http.StatusNoContent)
+	})
+
+	//Retrieve professional players
+	r.GET("/api/players", func(c *gin.Context) {
+		players, err := database.GetPlayers(
+			c.Request.Context(),
+			config.DB,
+		)
+
+		if err != nil {
+			log.Printf("Failed to retrieve players: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to retrieve players",
+			})
+			return
+		}
+
+		//Format response
+		result := make([]gin.H, 0, len(players))
+
+		for _, player := range players {
+			result = append(result, gin.H{
+				"id":            player.ExternalID,
+				"name":          player.Name,
+				"country":       player.Country,
+				"countryCode":   player.CountryCode,
+				"qualification": player.Qualification,
+				"route":         player.Route,
+				"bio":           player.Bio,
+				"image":         player.ImageURL,
+				"source":        player.SourceURL,
+				"imageSource":   player.ImageSourceURL,
+			})
+		}
+
+		c.JSON(http.StatusOK, result)
 	})
 
 	api := r.Group("/api")
@@ -226,10 +284,33 @@ func main() {
 	if err != nil {
 		log.Fatal("Could not parse private key: ", err)
 	}
+
+	//connect to PostgreSQL
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	db, err := database.Connect(ctx, os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Fatal("Failed to connect to PostgreSQL: ", err)
+	}
+	defer db.Close()
+
+	log.Println("Connected to PostgreSQL successfully!")
+
+	// Test reading from the users table
+	var userCount int
+
+	err = db.QueryRow(ctx, "SELECT COUNT(*) FROM users").Scan(&userCount)
+	if err != nil {
+		log.Fatal("Failed to query users table: ", err)
+	}
+
+	log.Printf("Total users in database: %d", userCount)
+
 	// Bound OAuth exchange requests as well as Discord profile requests.
 	http.DefaultClient.Timeout = 15 * time.Second
 	r := newRouter(appConfig{
-		FrontendURL: frontend, SecureCookies: callback.Scheme == "https",
+		DB: db, FrontendURL: frontend, SecureCookies: callback.Scheme == "https",
 		DiscordUserURL: "https://discord.com/api/users/@me",
 		OAuth: &oauth2.Config{
 			ClientID:     envOr("DISCORD_CLIENT_ID", "1565415990093684767"),
