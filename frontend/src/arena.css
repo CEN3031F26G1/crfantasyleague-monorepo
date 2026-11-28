@@ -7,7 +7,6 @@
 }
 
 .arena-header {
-  background: #091c35;
   border-bottom: 1px solid #324866;
 }
 .arena-header .header-inner {
@@ -16,12 +15,6 @@
   padding-block: 12px;
 }
 .arena-header .brand-light { color: #ffc457; font-weight: 700; }
-.arena-header .brand-mark {
-  background: linear-gradient(145deg, #185d9f, #0a284c);
-  color: #ffd169;
-  border: 2px solid #ddb15d;
-  border-radius: 9px 9px 15px 15px;
-}
 .arena-header .nav-link { color: #e0e8f2; font-weight: 650; }
 .arena-header .nav-link.active { color: #ffd477; }
 .arena-header .nav-link.active::after { bottom: -7px; }
@@ -37,11 +30,12 @@
   background-position: center;
   background-size: cover;
   border-bottom: 2px solid #bc914e;
+  padding-bottom: clamp(20px, 3vw, 38px);
 }
 .arena-inner {
   max-width: 1296px;
   margin-inline: auto;
-  padding: clamp(72px, 6.9vw, 114px) 40px clamp(74px, 7vw, 124px);
+  padding: clamp(72px, 6.9vw, 114px) 40px clamp(28px, 3.5vw, 52px);
 }
 .arena-eyebrow {
   margin: 0 0 17px;
@@ -51,7 +45,7 @@
   text-transform: uppercase;
   color: #e4ecf8;
 }
-.arena-hero h1, .arena-guide h2 {
+.arena-hero h1, #guide-title {
   font-family: "Archivo Black", "Inter Variable", sans-serif;
   font-weight: 400;
 }
@@ -89,11 +83,70 @@
   font-weight: 800;
 }
 .arena-cta:hover { background: linear-gradient(#ffe9a5, #ffbf52); }
+.finals-strip {
+  color: #f7f9fe;
+  width: min(92%, 1000px);
+  margin-inline: auto;
+  padding: 18px clamp(14px, 2.3vw, 32px);
+  border: 1px solid #546a81;
+  border-radius: 14px;
+  background: linear-gradient(115deg, #182f49ed, #0e2139f5);
+  box-shadow: 0 7px 20px #05152966;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: clamp(20px, 4vw, 64px);
+  align-items: center;
+}
+.finals-identity { display: flex; align-items: center; gap: 12px; }
+.finals-crest {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 50px;
+  border-radius: 9px 9px 19px 19px;
+  border: 1px solid #d2a85e;
+  background: linear-gradient(150deg, #28577d, #10263e);
+  color: #ffd477;
+}
+.finals-identity p, .finals-facts dt {
+  margin: 0 0 4px;
+  color: #c2d1e2;
+  font-size: 11px;
+  line-height: 1.3;
+}
+.finals-identity p { color: #ffdb8f; font-weight: 650; }
+.finals-identity h2 {
+  margin: 0;
+  font: 400 clamp(20px, 2vw, 26px)/1.1 "Archivo Black", sans-serif;
+  letter-spacing: -.045em;
+}
+.finals-facts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin: 0;
+}
+.finals-facts div { padding-inline-start: clamp(12px, 2vw, 32px); border-inline-start: 1px solid #546c866b; }
+.finals-facts dd { margin: 0; font: 700 clamp(17px, 1.65vw, 23px)/1.15 var(--heading); }
+.finals-details {
+  min-height: 44px;
+  font-weight: 650;
+  font-size: 13px;
+  color: #ffda88;
+  white-space: nowrap;
+}
+@media (max-width: 760px) {
+  .finals-strip { grid-template-columns: 1fr auto; gap: 14px 8px; padding-block: 17px; }
+  .finals-identity { gap: 9px; }
+  .finals-crest { width: 36px; height: 42px; }
+  .finals-details { grid-column: 2; grid-row: 1; font-size: 12px; }
+  .finals-facts { grid-column: 1 / -1; border-top: 1px solid #546c866b; padding-top: 13px; }
+  .finals-facts div:first-child { border: 0; padding: 0; }
+}
 .arena-guide {
   padding: 34px 0 48px;
   text-align: center;
   color: #f7f9fe;
-  background: radial-gradient(ellipse at 50% 0%, #19385b, #0c203a 52%, #09182c);
+  background: linear-gradient(#0c203a, #09182c);
 }
 .arena-divider {
   display: flex;
@@ -109,47 +162,65 @@
   height: 1px;
   background: #bc924e;
 }
-.arena-guide h2 {
+#guide-title {
   margin-bottom: 8px;
   font-size: clamp(28px, 3vw, 45px);
   line-height: 1.1;
   letter-spacing: -.055em;
 }
-.guide-intro, .scouting-steps p {
+.guide-intro, .how-grid p {
   margin: 0;
   color: #c3d4e8;
   font-size: 15px;
-  line-height: 1.5;
+  line-height: 1.55;
 }
-.scouting-steps {
+.how-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  margin: 36px 0 0;
-  padding: 0;
-  list-style: none;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 30px;
+  text-align: left;
 }
-.scouting-steps li { padding: 0 19px; }
-.scouting-steps li + li { border-inline-start: 1px solid #49678570; }
-.arena-emblem {
-  display: inline-grid;
-  place-items: center;
-  width: 49px;
-  height: 49px;
-  margin-bottom: 12px;
-  color: #ffcd69;
-  background: linear-gradient(145deg, #254765, #0a1a2f);
-  border: 1px solid #557696;
-  border-radius: 11px;
-  box-shadow: inset 0 1px #a3c9e638;
+.how-grid article {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: clamp(20px, 2vw, 28px);
+  border: 1px solid #38516b;
+  border-radius: 10px;
+  background: linear-gradient(140deg, #172f49, #0e233b);
 }
-.scouting-steps h3 { margin: 0 0 5px; font-size: 18px; }
-.scouting-steps p { font-size: 13px; }
+.how-grid .step-icon {
+  color: #ffd477;
+  border-color: #8e744c;
+  background: #1c3750;
+}
+.how-grid .step-number {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  color: #9fb3c9;
+  font: 500 13px var(--heading);
+}
+.how-grid h3 { margin: 22px 0 9px; font-size: 20px; }
+.how-grid p { margin-bottom: 20px; font-size: 14px; }
+.how-grid .inline-link, .how-grid .coming-label {
+  display: inline-flex;
+  align-items: center;
+  margin-top: auto;
+  min-height: 34px;
+  font-size: 12px;
+}
+.how-grid .inline-link { color: #ffcf70; font-weight: 650; }
+.how-grid .inline-link:hover { text-decoration: underline; }
+.how-grid .coming-label { color: #a7bacd; }
 @media (max-width: 740px) {
   .arena-inner {
     padding: 185px 22px 40px;
   }
   .arena-hero {
-    background-image: linear-gradient(0deg, #07162b 1%, #07162bd6 30%, #07162b15 76%), url("/royal-arena.webp");
+    background-image: linear-gradient(0deg, #07162b6b, #07162bd6 31%, #07162bcc 55%, #07162b15 82%), url("/royal-arena.webp");
     background-position: 70% center;
   }
   .arena-hero h1 { font-size: clamp(42px, 9.5vw, 65px); }
@@ -159,7 +230,5 @@
   .arena-header .nav-link { min-height: 28px; }
   .arena-header .nav-link.active::after { bottom: 0; }
   .arena-guide { padding: 28px 0 36px; }
-  .scouting-steps { grid-template-columns: repeat(2, 1fr); row-gap: 27px; margin-top: 28px; }
-  .scouting-steps li { padding: 0 8px; }
-  .scouting-steps li:nth-child(odd) { border-inline-start: 0; }
+  .how-grid { grid-template-columns: 1fr; gap: 12px; margin-top: 24px; }
 }

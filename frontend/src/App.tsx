@@ -11,20 +11,16 @@ import {
 import * as Avatar from "@radix-ui/react-avatar";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
-  Swords,
-  ArrowLeft,
   ArrowRight,
-  Check,
   ChevronDown,
   CircleHelp,
   Crown,
   ExternalLink,
-  Layers3,
+  Users,
   LogOut,
   Search,
   ShieldCheck,
   Trophy,
-  Users,
   X,
 } from "lucide-react";
 import "./arena.css";
@@ -108,9 +104,10 @@ function AccountMenu() {
 }
 
 function Header() {
-  const home = useLocation().pathname === "/";
+  const { pathname } = useLocation();
+  const arena = pathname === "/" || pathname === "/players" || pathname === "/login";
   return (
-    <header className={home ? "site-header arena-header" : "site-header"}>
+    <header className={arena ? "site-header arena-header" : "site-header"}>
       <div className="header-inner">
         <Link to="/" aria-label="Royale Fantasy home">
           <Logo />
@@ -125,7 +122,6 @@ function Header() {
           >
             Overview
           </NavLink>
-          {home && <a href="#how-it-works" className="nav-link">How it works</a>}
           <NavLink
             to="/players"
             className={({ isActive }) =>
@@ -146,23 +142,13 @@ function Header() {
 function Footer() {
   return (
     <footer className="site-footer">
-      <div className="container footer-top">
-        <div>
-          <Link to="/" aria-label="Royale Fantasy home">
-            <Logo />
-          </Link>
-          <p>A little more at stake. A lot more to cheer for.</p>
-        </div>
-        <div className="footer-links">
-          <Link to="/players">Player catalog</Link>
-          <ExternalAnchor href={rosterSource}>Tournament source</ExternalAnchor>
-        </div>
-      </div>
-      <div className="container footer-bottom">
-        <span>
-          An independent fan project. Not affiliated with Supercell or Discord.
-        </span>
-        <span>Fantasy only · No real-money wagering</span>
+      <div className="container footer-inner">
+        <Link to="/" aria-label="Royale Fantasy home">
+          <Logo />
+        </Link>
+        <small>
+          Fantasy only · No real-money wagering · Unaffiliated with Supercell or Discord
+        </small>
       </div>
     </footer>
   );
@@ -170,11 +156,12 @@ function Footer() {
 
 function SessionNotice() {
   const { error, refresh, loggingOut, logout } = useAuth();
-  if (!error) return null;
-  const failedLogout = error.includes("sign you out");
+  const { pathname } = useLocation();
+  if (!error || (error === "session" && pathname !== "/login")) return null;
+  const failedLogout = error === "logout";
   return (
     <div className="session-notice" role="alert">
-      <span>{error}</span>
+      <span>{failedLogout ? "We couldn’t sign you out. Please try again." : "We couldn’t reach the login service."}</span>
       <button
         onClick={() => {
           void (failedLogout ? logout() : refresh());
@@ -186,13 +173,6 @@ function SessionNotice() {
     </div>
   );
 }
-
-const scoutingSteps = [
-  { icon: Swords, title: "Meet the pros", detail: "Explore all 16 World Finals contenders." },
-  { icon: Crown, title: "Scout your picks", detail: "Discover each player’s path to the finals." },
-  { icon: Layers3, title: "Draft your team", detail: "Roster building is coming soon." },
-  { icon: Trophy, title: "Compete in leagues", detail: "Fantasy scoring and standings are on the way." },
-];
 
 function Home() {
   return (
@@ -211,21 +191,68 @@ function Home() {
             </Link>
           </div>
         </div>
+        <section className="finals-strip" aria-labelledby="finals-title">
+          <div className="finals-identity">
+            <span className="finals-crest" aria-hidden="true"><Trophy size={26} /></span>
+            <div>
+              <p>Clash Royale League · 2026</p>
+              <h2 id="finals-title">World Finals</h2>
+            </div>
+          </div>
+          <dl className="finals-facts">
+            <div><dt>Finalists</dt><dd>{players.length}</dd></div>
+            <div><dt>Dates</dt><dd>6–8 Nov</dd></div>
+            <div><dt>Host city</dt><dd>Shanghai</dd></div>
+          </dl>
+          <ExternalAnchor href={rosterSource} className="finals-details">Event details</ExternalAnchor>
+        </section>
       </section>
       <section className="arena-guide" id="how-it-works" aria-labelledby="guide-title">
         <div className="container">
           <div className="arena-divider" aria-hidden="true"><Crown size={24} /></div>
           <h2 id="guide-title">How fantasy works</h2>
-          <p className="guide-intro">Get to know the field before you draft your first team.</p>
-          <ul className="scouting-steps">
-            {scoutingSteps.map(({ icon: Icon, title, detail }) => (
-              <li key={title}>
-                <span className="arena-emblem"><Icon size={28} aria-hidden="true" /></span>
-                <h3>{title}</h3>
-                <p>{detail}</p>
-              </li>
-            ))}
-          </ul>
+          <h2 className="guide-intro">A new way to watch the finals.</h2>
+          <div className="how-grid">
+            <article>
+              <span className="step-icon">
+                <Search size={21} aria-hidden="true" />
+              </span>
+              <span className="step-number">01</span>
+              <h3>Know your contenders</h3>
+              <p>
+                Explore every qualified player, their background, and their road
+                to the World Finals.
+              </p>
+              <Link to="/players" className="inline-link">
+                Browse the catalog
+                <ArrowRight size={14} aria-hidden="true" />
+              </Link>
+            </article>
+            <article>
+              <span className="step-icon">
+                <Users size={21} aria-hidden="true" />
+              </span>
+              <span className="step-number">02</span>
+              <h3>Make it your team</h3>
+              <p>
+                Pick the players you believe in. Put your Clash Royale knowledge
+                behind a roster of your own.
+              </p>
+              <span className="coming-label">Coming soon</span>
+            </article>
+            <article>
+              <span className="step-icon">
+                <Trophy size={21} aria-hidden="true" />
+              </span>
+              <span className="step-number">03</span>
+              <h3>Follow every crown</h3>
+              <p>
+                Cheer for your picks on the world stage. Fantasy scoring and
+                league competition are on the way.
+              </p>
+              <span className="coming-label">Coming soon</span>
+            </article>
+          </div>
         </div>
       </section>
     </>
@@ -240,29 +267,23 @@ const routeOptions = [
   { value: "champions-cup", label: "Champions Cup" },
 ];
 
-function PlayerCard({ player, index }: { player: Player; index: number }) {
+function PlayerCard({ player }: { player: Player }) {
   return (
-    <article className={`player-card player-color-${index % 5}`}>
+    <article className="player-card">
       <div className="player-card-top">
         <PlayerPortrait player={player} />
-        <span className="qualified-badge">
-          <Check size={11} />
-          QUALIFIED
-        </span>
       </div>
       <div className="player-card-body">
         <div className="player-card-heading">
           <h2>{player.name}</h2>
-          <Flag player={player} />
         </div>
-        <p className="player-country">{player.country}</p>
-        <p className="player-bio">{player.bio}</p>
+        <p className="player-country"><Flag player={player} /> {player.country}</p>
         <div className="player-route">
-          <span className="route-dot" />
+          <Trophy size={14} aria-hidden="true" />
           {player.qualification}
         </div>
         <PlayerDialog player={player}>
-          <button className="player-details-button">
+          <button className="player-details-button" aria-label={`Player profile: ${player.name}`}>
             Player profile
             <ArrowRight size={15} />
           </button>
@@ -298,110 +319,81 @@ function Catalog() {
     );
   }
   return (
-    <div className="container catalog-page">
-      <div className="page-breadcrumb">
-        <Link to="/">Overview</Link>
-        <span>/</span>Player catalog
-      </div>
-      <div className="catalog-heading">
-        <div>
-          <span className="eyebrow gold">SHANGHAI · 6–8 NOVEMBER 2026</span>
-          <h1>
-            Meet the <span>finalists.</span>
-          </h1>
-          <p>
-            The best in the arena. The start of your dream team.
-            <br />
-            Explore all 16 players qualified for the CRL 2026 World Finals.
-          </p>
+    <div className="catalog-page">
+      <header className="catalog-banner">
+        <div className="container">
+          <p className="arena-eyebrow">CRL World Finals · Shanghai 2026</p>
+          <h1>Meet the <span>finalists.</span></h1>
+          <p>Explore the players and discover how they earned their place in the arena.</p>
         </div>
-        <div className="catalog-total">
-          <Users size={21} />
-          <strong>
-            16<span>qualified players</span>
-          </strong>
-        </div>
-      </div>
-      <div className="catalog-info">
-        <ShieldCheck size={17} />
-        <span>
-          Scouting is open to everyone. Team selection and fantasy scoring are
-          coming soon.
-        </span>
-      </div>
-      <div className="catalog-toolbar">
-        <div className="search-field">
-          <Search size={18} aria-hidden="true" />
-          <input
-            type="search"
-            aria-label="Search players or countries"
-            placeholder="Search a player or country…"
-            value={query}
-            onChange={(event) => updateParam("q", event.target.value)}
-          />
-          {query && (
-            <button
-              className="icon-button"
-              aria-label="Clear search"
-              onClick={() => updateParam("q", "")}
-            >
-              <X size={15} />
-            </button>
-          )}
-        </div>
-        <FilterSelect
-          value={route}
-          onChange={(value) => updateParam("route", value)}
-          options={routeOptions}
-        />
-      </div>
-      <div className="catalog-results-line">
-        <span role="status">
-          Showing <strong>{filtered.length}</strong> of 16 players
-        </span>
-        <span>
-          <span className="live-dot" />
-          2026 WORLD FINALS
-        </span>
-      </div>
-      {filtered.length ? (
-        <div className="player-grid">
-          {filtered.map((player) => (
-            <PlayerCard
-              key={player.id}
-              player={player}
-              index={players.indexOf(player)}
+      </header>
+      <div className="container catalog-field">
+        <div className="catalog-toolbar">
+          <div className="search-field">
+            <Search size={18} aria-hidden="true" />
+            <input
+              type="search"
+              aria-label="Search players or countries"
+              placeholder="Search a player or country…"
+              value={query}
+              onChange={(event) => updateParam("q", event.target.value)}
             />
-          ))}
+            {query && (
+              <button
+                className="icon-button"
+                aria-label="Clear search"
+                onClick={() => updateParam("q", "")}
+              >
+                <X size={15} />
+              </button>
+            )}
+          </div>
+          <FilterSelect
+            value={route}
+            onChange={(value) => updateParam("route", value)}
+            options={routeOptions}
+          />
         </div>
-      ) : (
-        <div className="empty-state">
-          <Search size={28} />
-          <h2>No players found</h2>
-          <p>Try another player, country, or qualification route.</p>
-          <button
-            className="button button-outline"
-            onClick={() => setParams({})}
-          >
-            Reset filters
-          </button>
+        <div className="catalog-results-line">
+          <span role="status">
+            Showing <strong>{filtered.length}</strong> of 16 players
+          </span>
         </div>
-      )}
-      <aside className="catalog-source-note" aria-label="Catalog sources">
-        <CircleHelp size={17} />
-        <div>
-          <p>
-            Roster and player biographies sourced from{" "}
-            <ExternalAnchor href={rosterSource}>Liquipedia</ExternalAnchor> ·
-            Checked {verifiedDate}.
-          </p>
-          <p>
-            This is a manually curated snapshot, not a live feed. Verified
-            profile images are shown where available; otherwise, players have a
-            monogram. Image credits and individual sources are in each profile.
-          </p>
-        </div>
-      </aside>
+        {filtered.length ? (
+          <div className="player-grid">
+            {filtered.map((player) => (
+              <PlayerCard key={player.id} player={player} />
+            ))}
+          </div>
+        ) : (
+          <div className="empty-state">
+            <Search size={28} />
+            <h2>No players found</h2>
+            <p>Try another player, country, or qualification route.</p>
+            <button
+              className="button button-outline"
+              onClick={() => setParams({})}
+            >
+              Reset filters
+            </button>
+          </div>
+        )}
+        <aside className="catalog-source-note" aria-label="Catalog sources">
+          <CircleHelp size={17} />
+          <div>
+            <p>
+              Roster and player biographies sourced from{" "}
+              <ExternalAnchor href={rosterSource}>Liquipedia</ExternalAnchor> ·
+              Checked {verifiedDate}.
+            </p>
+            <p>
+              This is a manually curated snapshot, not a live feed. Verified
+              profile images are shown where available; otherwise, players have a
+              monogram. Image credits and individual sources are in each profile.
+            </p>
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }
@@ -427,43 +419,12 @@ function Login() {
   }, []);
   if (!loading && user) return <Navigate to="/" replace />;
   return (
-    <section className="login-page container">
-      <Link to="/" className="back-link">
-        <ArrowLeft size={15} />
-        Back to overview
-      </Link>
+    <section className="login-page" aria-labelledby="login-title">
       <div className="login-layout">
-        <div className="login-intro">
-          <span className="eyebrow gold">
-            WELCOME TO YOUR SIDE OF THE ARENA
-          </span>
-          <h1>
-            Good picks.
-            <br />
-            <span>Great company.</span>
-          </h1>
-          <p>
-            A fantasy league for people who know that the best matches are the
-            ones you’re invested in.
-          </p>
-          <div className="login-intro-detail">
-            <span className="step-icon">
-              <Crown size={25} />
-            </span>
-            <div>
-              <strong>One world stage. Your perspective.</strong>
-              <span>CRL 2026 World Finals · Shanghai</span>
-            </div>
-          </div>
-        </div>
         <div className="login-card">
-          <span className="login-icon">
-            <DiscordIcon size={31} />
-          </span>
-          <h2>Take your seat.</h2>
-          <p>
-            Sign in with Discord to get your profile ready for Royale Fantasy.
-          </p>
+          <img className="login-crest" src="/royale-shield.svg" alt="" width="48" height="48" />
+          <h1 id="login-title">Sign in to<br /><span>Royale Fantasy.</span></h1>
+          <SessionNotice />
           {error && (
             <div className="login-error" role="alert">
               {loginErrors[error] ||
@@ -483,24 +444,17 @@ function Login() {
             {leaving ? "Opening Discord…" : "Continue with Discord"}
             <ExternalLink size={15} />
           </a>
-          <div className="login-security">
-            <ShieldCheck size={15} />
-            <span>Secure sign-in. No new password.</span>
-          </div>
-          <div className="login-permissions">
-            <p>Just the essentials.</p>
-            <span>
-              We only request your public Discord profile: your name, avatar,
-              and user ID. We never access your messages, servers, or email.
-            </span>
-          </div>
-          <p className="login-footnote">
-            Not ready to sign in?{" "}
-            <Link to="/players">
-              Explore the player catalog
-              <ArrowRight size={12} />
-            </Link>
-          </p>
+          <section className="login-security" aria-labelledby="login-security-title">
+            <h2 id="login-security-title">
+              <ShieldCheck size={17} aria-hidden="true" />
+              Your privacy
+            </h2>
+            <ul>
+              <li>Your password stays with Discord.</li>
+              <li>Only your name, avatar and ID are shared.</li>
+              <li>Your messages and email stay private.</li>
+            </ul>
+          </section>
         </div>
       </div>
     </section>
@@ -525,7 +479,11 @@ export default function App() {
   const { pathname } = useLocation();
   useEffect(() => {
     document.title = `${pathname === "/players" ? "Player catalog" : pathname === "/login" ? "Sign in" : "Your roster. Their moment."} — Royale Fantasy`;
-    window.scrollTo(0, 0);
+    if (pathname === "/" && window.location.hash === "#how-it-works") {
+      document.getElementById("how-it-works")?.scrollIntoView();
+    } else {
+      window.scrollTo(0, 0);
+    }
   }, [pathname]);
   return (
     <>
@@ -533,7 +491,7 @@ export default function App() {
         Skip to content
       </a>
       <Header />
-      {pathname !== "/" && <SessionNotice />}
+      {pathname !== "/login" && <SessionNotice />}
       <main id="main">
         <Routes>
           <Route path="/" element={<Home />} />
@@ -542,7 +500,6 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
-      {pathname === "/" && <SessionNotice />}
       <Footer />
     </>
   );

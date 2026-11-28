@@ -14,9 +14,7 @@ export const verifiedDate = "October 30, 2026";
 export function Logo({ compact = false }: { compact?: boolean }) {
   return (
     <span className="brand">
-      <span className="brand-mark">
-        <Crown size={23} strokeWidth={1.8} />
-      </span>
+      <img className="brand-mark" src="/royale-shield.svg" width={34} height={34} alt="" />
       {!compact && (
         <span>
           royale<span className="brand-light">fantasy</span>
@@ -80,13 +78,14 @@ export function PlayerPortrait({
 }
 
 export function Flag({ player }: { player: Player }) {
-  const flag = [...player.countryCode]
-    .map((letter) => String.fromCodePoint(127397 + letter.charCodeAt(0)))
-    .join("");
   return (
-    <span role="img" aria-label={player.country} className="flag">
-      {flag}
-    </span>
+    <img
+      className="flag"
+      src={`/flags/${player.countryCode.toLowerCase()}.svg`}
+      alt=""
+      width={20}
+      height={15}
+    />
   );
 }
 
@@ -148,12 +147,6 @@ export function PlayerDialog({
               {player.qualification}
             </strong>
           </div>
-          {!player.image && (
-            <p className="photo-note">
-              A verified profile image is not available yet. A monogram is shown
-              instead.
-            </p>
-          )}
           <div className="dialog-sources">
             <ExternalAnchor href={player.source}>Player source</ExternalAnchor>
             {player.imageSource && (
@@ -185,6 +178,7 @@ export function FilterSelect({
     <Select.Root value={value} onValueChange={onChange}>
       <Select.Trigger
         className="filter-select"
+        data-filtered={value !== "all"}
         aria-label="Filter by qualification route"
       >
         <Select.Value />

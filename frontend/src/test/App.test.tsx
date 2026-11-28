@@ -43,9 +43,9 @@ describe("public frontend", () => {
     expect(
       await screen.findByRole("link", { name: /Sign in with Discord/ }),
     ).toHaveAttribute("href", "/login");
-    expect(
-      screen.getByText("No real-money wagering", { exact: false }),
-    ).toBeInTheDocument();
+    const footer = within(screen.getByRole("contentinfo"));
+    expect(footer.getAllByRole("link")).toHaveLength(1);
+    expect(footer.getByRole("link", { name: "Royale Fantasy home" })).toHaveAttribute("href", "/");
   });
 
   it("shows all 16 sourced qualifiers without signing in", () => {
@@ -92,14 +92,13 @@ describe("public frontend", () => {
     ).toBeInTheDocument();
   });
 
-  it("opens accessible player profiles with sources and honest photo fallbacks", async () => {
+  it("opens a player profile with initials and sources when no photo is available", async () => {
     mount("/players?q=Hermit");
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: /Player profile/ }));
     const dialog = screen.getByRole("dialog", { name: "Hermit" });
-    expect(
-      within(dialog).getByText(/A verified profile image is not available/),
-    ).toBeInTheDocument();
+    expect(within(dialog).getByText("H")).toBeInTheDocument();
+    expect(within(dialog).queryByText(/A verified profile image is not available/)).toBeNull();
     expect(
       within(dialog).getByRole("link", { name: /Player source/ }),
     ).toHaveAttribute("href", expect.stringContaining("liquipedia.net"));
@@ -115,9 +114,9 @@ describe("public frontend", () => {
     expect(screen.getByRole("alert")).toHaveTextContent(
       "Discord sign-in was cancelled",
     );
-    expect(
-      screen.getByRole("link", { name: /Explore the player catalog/ }),
-    ).toHaveAttribute("href", "/players");
+    const privacy = within(screen.getByRole("region", { name: "Your privacy" }));
+    expect(privacy.getAllByRole("listitem")).toHaveLength(3);
+    expect(privacy.getByText("Your password stays with Discord.")).toBeInTheDocument();
   });
 
   it("renders a not found page", () => {
@@ -160,21 +159,27 @@ describe("authentication UI", () => {
     ).toBeInTheDocument();
   });
 
-  it("keeps the public catalog usable when the backend is offline", async () => {
+  it("only shows a failed session check when the visitor goes to sign in", async () => {
+    const user = userEvent.setup();
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
     render(
-      <MemoryRouter initialEntries={["/players"]}>
+      <MemoryRouter initialEntries={["/"]}>
         <AuthProvider>
           <App />
         </AuthProvider>
       </MemoryRouter>,
     );
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "We couldn’t reach the login service",
-    );
+    await screen.findByRole("link", { name: /Sign in with Discord/ });
+    expect(screen.queryByRole("alert")).toBeNull();
+    await user.click(screen.getByRole("link", { name: /Explore the players/ }));
     expect(
       screen.getAllByRole("button", { name: /Player profile/ }),
     ).toHaveLength(16);
+    expect(screen.queryByRole("alert")).toBeNull();
+    await user.click(screen.getByRole("link", { name: /Sign in with Discord/ }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "We couldn’t reach the login service",
+    );
     expect(
       screen.getByRole("button", { name: "Try again" }),
     ).toBeInTheDocument();
