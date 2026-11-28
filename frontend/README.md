@@ -88,3 +88,11 @@ DISCORD_REDIRECT_URL=https://fantasy.example.com/auth/callback
 Register the production callback with Discord. The backend automatically enables Secure cookies when the callback URL is HTTPS. Terminate TLS at your reverse proxy, keep the private key and client secret server-side, and preserve the request Origin header. Avoid cross-site frontend/API deployments without redesigning the cookie and CSRF policy. `npm run preview` is only a static build preview, not the configured authenticated development server.
 
 Design references RoyaleTools' compact tool-oriented navigation and card layouts without copying its branding, source code, or art.
+
+## Landing page design
+
+Review the current homepage at [desktop width](docs/design/home-desktop.jpg) and [mobile width](docs/design/home-mobile.jpg).
+
+Larry reaches for a gold crown on the homepage. The gold primary action opens the player catalog, where the Blue King chooses a card. On the sign-in page, a Royal Guard opens the gate. On narrow screens the artwork sits above the page title or sign-in form.
+
+The home palette pairs navy (#091C35) with crown gold (#FFCA57). Local Archivo Black sets the main headings, Inter sets body copy, and Space Grotesk sets supporting headings. The three illustrations were generated with ImageGen and are served as WebP files from `public/`. Archivo Black and its SIL Open Font License are in `public/fonts/`.

@@ -11,25 +11,19 @@ import {
 import * as Avatar from "@radix-ui/react-avatar";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
-  ArrowDown,
-  ArrowLeft,
   ArrowRight,
-  Check,
   ChevronDown,
   CircleHelp,
   Crown,
   ExternalLink,
-  Globe2,
-  Layers3,
+  Users,
   LogOut,
-  MapPin,
   Search,
   ShieldCheck,
-  Sparkles,
   Trophy,
-  Users,
   X,
 } from "lucide-react";
+import "./arena.css";
 import { useAuth } from "./auth";
 import {
   DiscordIcon,
@@ -110,8 +104,10 @@ function AccountMenu() {
 }
 
 function Header() {
+  const { pathname } = useLocation();
+  const arena = pathname === "/" || pathname === "/players" || pathname === "/login";
   return (
-    <header className="site-header">
+    <header className={arena ? "site-header arena-header" : "site-header"}>
       <div className="header-inner">
         <Link to="/" aria-label="Royale Fantasy home">
           <Logo />
@@ -146,23 +142,13 @@ function Header() {
 function Footer() {
   return (
     <footer className="site-footer">
-      <div className="container footer-top">
-        <div>
-          <Link to="/" aria-label="Royale Fantasy home">
-            <Logo />
-          </Link>
-          <p>A little more at stake. A lot more to cheer for.</p>
-        </div>
-        <div className="footer-links">
-          <Link to="/players">Player catalog</Link>
-          <ExternalAnchor href={rosterSource}>Tournament source</ExternalAnchor>
-        </div>
-      </div>
-      <div className="container footer-bottom">
-        <span>
-          An independent fan project. Not affiliated with Supercell or Discord.
-        </span>
-        <span>Fantasy only · No real-money wagering</span>
+      <div className="container footer-inner">
+        <Link to="/" aria-label="Royale Fantasy home">
+          <Logo />
+        </Link>
+        <small>
+          Fantasy only · No real-money wagering · Unaffiliated with Supercell or Discord
+        </small>
       </div>
     </footer>
   );
@@ -170,11 +156,12 @@ function Footer() {
 
 function SessionNotice() {
   const { error, refresh, loggingOut, logout } = useAuth();
-  if (!error) return null;
-  const failedLogout = error.includes("sign you out");
+  const { pathname } = useLocation();
+  if (!error || (error === "session" && pathname !== "/login")) return null;
+  const failedLogout = error === "logout";
   return (
     <div className="session-notice" role="alert">
-      <span>{error}</span>
+      <span>{failedLogout ? "We couldn’t sign you out. Please try again." : "We couldn’t reach the login service."}</span>
       <button
         onClick={() => {
           void (failedLogout ? logout() : refresh());
@@ -187,201 +174,85 @@ function SessionNotice() {
   );
 }
 
-function HeroRoster() {
-  const featured = [players[0], players[4], players[10]];
-  return (
-    <div
-      className="hero-art"
-      aria-label="A preview of the World Finals player pool"
-    >
-      <div className="arena-orbit orbit-one" />
-      <div className="arena-orbit orbit-two" />
-      <div className="arena-star star-one">✦</div>
-      <div className="arena-star star-two">✦</div>
-      <div className="roster-preview">
-        <div className="preview-top">
-          <span>
-            <Layers3 size={15} /> THE PLAYER POOL
-          </span>
-          <span className="preview-dots">•••</span>
-        </div>
-        <div className="preview-heading">
-          <span>
-            World-class talent.
-            <br />
-            <strong>Your next roster.</strong>
-          </span>
-          <span className="preview-crown">
-            <Crown size={31} strokeWidth={1.4} />
-          </span>
-        </div>
-        {featured.map((player, index) => (
-          <div className="preview-player" key={player.id}>
-            <span className="preview-rank">0{index + 1}</span>
-            <PlayerPortrait player={player} className="preview-portrait" />
-            <div>
-              <strong>{player.name}</strong>
-              <span>
-                <Flag player={player} />
-                {player.country}
-              </span>
-            </div>
-            <ShieldCheck size={18} className="preview-verified" />
-          </div>
-        ))}
-        <Link to="/players" className="preview-bottom">
-          <span>Meet all 16 finalists</span>
-          <ArrowRight size={16} />
-        </Link>
-      </div>
-      <div className="floating-ticket">
-        <span className="ticket-icon">
-          <Trophy size={19} />
-        </span>
-        <div>
-          <strong>Shanghai, 2026</strong>
-          <span>The world stage is set.</span>
-        </div>
-        <span className="ticket-dot" />
-      </div>
-    </div>
-  );
-}
-
 function Home() {
   return (
     <>
-      <section className="hero container">
-        <div className="hero-copy">
-          <div className="event-pill">
-            <span className="live-dot" />
-            CRL WORLD FINALS 2026
-            <span className="pill-divider" />
-            FANTASY LEAGUE
-          </div>
-          <h1>
-            Your roster. <br />
-            Their <span>moment.</span>
-          </h1>
-          <p className="hero-description">
-            You know the players. Now back your picks.
-            <br className="desktop-only" /> Build your dream team from the best
-            in Clash Royale and make every match mean more.
+      <section className="arena-hero" aria-labelledby="arena-title">
+        <div className="arena-inner">
+          <h1 id="arena-title">Your roster. <br /><span>Their moment.</span></h1>
+          <p className="arena-intro">
+            Sixteen finalists. One crown. Scout the pros on the road to Shanghai
+            and find the players you’ll be cheering for.
           </p>
-          <div className="hero-actions">
-            <Link to="/players" className="button button-gold">
-              Explore the players
-              <ArrowRight size={17} />
+          <div className="arena-actions">
+            <Link to="/players" className="arena-cta">
+              Explore the players <ArrowRight size={20} aria-hidden="true" />
             </Link>
-            <a href="#how-it-works" className="button button-text">
-              How it works
-              <ArrowDown size={15} />
-            </a>
-          </div>
-          <div className="hero-reassurance">
-            <Globe2 size={14} />
-            Open player catalog<span>·</span>No account needed
           </div>
         </div>
-        <HeroRoster />
+        <section className="finals-strip" aria-labelledby="finals-title">
+          <div className="finals-identity">
+            <span className="finals-crest" aria-hidden="true"><Trophy size={26} /></span>
+            <div>
+              <p>Clash Royale League · 2026</p>
+              <h2 id="finals-title">World Finals</h2>
+            </div>
+          </div>
+          <dl className="finals-facts">
+            <div><dt>Finalists</dt><dd>{players.length}</dd></div>
+            <div><dt>Dates</dt><dd>6–8 Nov</dd></div>
+            <div><dt>Host city</dt><dd>Shanghai</dd></div>
+          </dl>
+          <ExternalAnchor href={rosterSource} className="finals-details">Event details</ExternalAnchor>
+        </section>
       </section>
-      <section
-        className="event-strip container"
-        aria-label="World Finals details"
-      >
-        <div className="event-strip-title">
-          <span className="event-strip-icon">
-            <Trophy size={22} />
-          </span>
-          <div>
-            <span className="eyebrow">THE BIGGEST STAGE</span>
-            <strong>CRL 2026 World Finals</strong>
+      <section className="arena-guide" id="how-it-works" aria-labelledby="guide-title">
+        <div className="container">
+          <div className="arena-divider" aria-hidden="true"><Crown size={24} /></div>
+          <h2 id="guide-title">How fantasy works</h2>
+          <h2 className="guide-intro">A new way to watch the finals.</h2>
+          <div className="how-grid">
+            <article>
+              <span className="step-icon">
+                <Search size={21} aria-hidden="true" />
+              </span>
+              <span className="step-number">01</span>
+              <h3>Know your contenders</h3>
+              <p>
+                Explore every qualified player, their background, and their road
+                to the World Finals.
+              </p>
+              <Link to="/players" className="inline-link">
+                Browse the catalog
+                <ArrowRight size={14} aria-hidden="true" />
+              </Link>
+            </article>
+            <article>
+              <span className="step-icon">
+                <Users size={21} aria-hidden="true" />
+              </span>
+              <span className="step-number">02</span>
+              <h3>Make it your team</h3>
+              <p>
+                Pick the players you believe in. Put your Clash Royale knowledge
+                behind a roster of your own.
+              </p>
+              <span className="coming-label">Coming soon</span>
+            </article>
+            <article>
+              <span className="step-icon">
+                <Crown size={21} aria-hidden="true" />
+              </span>
+              <span className="step-number">03</span>
+              <h3>Follow every crown</h3>
+              <p>
+                Cheer for your picks on the world stage. Fantasy scoring and
+                league competition are on the way.
+              </p>
+              <span className="coming-label">Coming soon</span>
+            </article>
           </div>
         </div>
-        <div className="event-stat">
-          <strong>16</strong>
-          <span>qualified players</span>
-        </div>
-        <div className="event-stat">
-          <strong>6–8 Nov</strong>
-          <span>2026 World Finals</span>
-        </div>
-        <div className="event-stat">
-          <strong>
-            <MapPin size={15} />
-            Shanghai
-          </strong>
-          <span>one world champion</span>
-        </div>
-        <ExternalAnchor href={rosterSource} className="event-source">
-          Event details
-        </ExternalAnchor>
-      </section>
-      <section className="how-section container" id="how-it-works">
-        <div className="section-heading">
-          <div>
-            <span className="eyebrow gold">FANTASY, WITHOUT THE FRICTION</span>
-            <h2>A new way to watch the finals.</h2>
-          </div>
-          <span className="subtle-pill">
-            <Sparkles size={13} />
-            Team building coming soon
-          </span>
-        </div>
-        <div className="how-grid">
-          <article>
-            <span className="step-icon">
-              <Search size={21} />
-            </span>
-            <span className="step-number">01</span>
-            <h3>Know your contenders</h3>
-            <p>
-              Explore every qualified player, their background, and their road
-              to the World Finals.
-            </p>
-            <Link to="/players" className="inline-link">
-              Browse the catalog
-              <ArrowRight size={14} />
-            </Link>
-          </article>
-          <article>
-            <span className="step-icon">
-              <Users size={21} />
-            </span>
-            <span className="step-number">02</span>
-            <h3>Make it your team</h3>
-            <p>
-              Pick the players you believe in. Put your Clash Royale knowledge
-              behind a roster of your own.
-            </p>
-            <span className="coming-label">Coming soon</span>
-          </article>
-          <article>
-            <span className="step-icon">
-              <Trophy size={21} />
-            </span>
-            <span className="step-number">03</span>
-            <h3>Follow every crown</h3>
-            <p>
-              Cheer for your picks on the world stage. Fantasy scoring and
-              league competition are on the way.
-            </p>
-            <span className="coming-label">Coming soon</span>
-          </article>
-        </div>
-      </section>
-      <section className="catalog-callout container">
-        <div>
-          <span className="eyebrow gold">
-            16 PLAYERS. ENDLESS POSSIBILITIES.
-          </span>
-          <h2>Great teams start with a little scouting.</h2>
-          <p>Meet the full field before you make your picks.</p>
-        </div>
-        <Link to="/players" className="button button-outline">
-          Meet the finalists
-          <ArrowRight size={17} />
-        </Link>
       </section>
     </>
   );
@@ -395,29 +266,23 @@ const routeOptions = [
   { value: "champions-cup", label: "Champions Cup" },
 ];
 
-function PlayerCard({ player, index }: { player: Player; index: number }) {
+function PlayerCard({ player }: { player: Player }) {
   return (
-    <article className={`player-card player-color-${index % 5}`}>
+    <article className="player-card">
       <div className="player-card-top">
         <PlayerPortrait player={player} />
-        <span className="qualified-badge">
-          <Check size={11} />
-          QUALIFIED
-        </span>
       </div>
       <div className="player-card-body">
         <div className="player-card-heading">
           <h2>{player.name}</h2>
-          <Flag player={player} />
         </div>
-        <p className="player-country">{player.country}</p>
-        <p className="player-bio">{player.bio}</p>
+        <p className="player-country"><Flag player={player} /> {player.country}</p>
         <div className="player-route">
-          <span className="route-dot" />
+          <Trophy size={14} aria-hidden="true" />
           {player.qualification}
         </div>
         <PlayerDialog player={player}>
-          <button className="player-details-button">
+          <button className="player-details-button" aria-label={`Player profile: ${player.name}`}>
             Player profile
             <ArrowRight size={15} />
           </button>
@@ -453,110 +318,75 @@ function Catalog() {
     );
   }
   return (
-    <div className="container catalog-page">
-      <div className="page-breadcrumb">
-        <Link to="/">Overview</Link>
-        <span>/</span>Player catalog
-      </div>
-      <div className="catalog-heading">
-        <div>
-          <span className="eyebrow gold">SHANGHAI · 6–8 NOVEMBER 2026</span>
-          <h1>
-            Meet the <span>finalists.</span>
-          </h1>
-          <p>
-            The best in the arena. The start of your dream team.
-            <br />
-            Explore all 16 players qualified for the CRL 2026 World Finals.
-          </p>
+    <div className="catalog-page">
+      <header className="catalog-banner">
+        <div className="container">
+          <h1>Meet the <span>finalists.</span></h1>
+          <p>Explore the players and discover how they earned their place in the arena.</p>
         </div>
-        <div className="catalog-total">
-          <Users size={21} />
-          <strong>
-            16<span>qualified players</span>
-          </strong>
-        </div>
-      </div>
-      <div className="catalog-info">
-        <ShieldCheck size={17} />
-        <span>
-          Scouting is open to everyone. Team selection and fantasy scoring are
-          coming soon.
-        </span>
-      </div>
-      <div className="catalog-toolbar">
-        <div className="search-field">
-          <Search size={18} aria-hidden="true" />
-          <input
-            type="search"
-            aria-label="Search players or countries"
-            placeholder="Search a player or country…"
-            value={query}
-            onChange={(event) => updateParam("q", event.target.value)}
-          />
-          {query && (
-            <button
-              className="icon-button"
-              aria-label="Clear search"
-              onClick={() => updateParam("q", "")}
-            >
-              <X size={15} />
-            </button>
-          )}
-        </div>
-        <FilterSelect
-          value={route}
-          onChange={(value) => updateParam("route", value)}
-          options={routeOptions}
-        />
-      </div>
-      <div className="catalog-results-line">
-        <span role="status">
-          Showing <strong>{filtered.length}</strong> of 16 players
-        </span>
-        <span>
-          <span className="live-dot" />
-          2026 WORLD FINALS
-        </span>
-      </div>
-      {filtered.length ? (
-        <div className="player-grid">
-          {filtered.map((player) => (
-            <PlayerCard
-              key={player.id}
-              player={player}
-              index={players.indexOf(player)}
+      </header>
+      <div className="container catalog-field">
+        <div className="catalog-toolbar">
+          <div className="search-field">
+            <Search size={18} aria-hidden="true" />
+            <input
+              type="search"
+              aria-label="Search players or countries"
+              placeholder="Search a player or country…"
+              value={query}
+              onChange={(event) => updateParam("q", event.target.value)}
             />
-          ))}
+            {query && (
+              <button
+                className="icon-button"
+                aria-label="Clear search"
+                onClick={() => updateParam("q", "")}
+              >
+                <X size={15} />
+              </button>
+            )}
+          </div>
+          <FilterSelect
+            value={route}
+            onChange={(value) => updateParam("route", value)}
+            options={routeOptions}
+          />
         </div>
-      ) : (
-        <div className="empty-state">
-          <Search size={28} />
-          <h2>No players found</h2>
-          <p>Try another player, country, or qualification route.</p>
-          <button
-            className="button button-outline"
-            onClick={() => setParams({})}
-          >
-            Reset filters
-          </button>
+        <div className="catalog-results-line">
+          <span role="status">
+            Showing <strong>{filtered.length}</strong> of 16 players
+          </span>
         </div>
-      )}
-      <aside className="catalog-source-note" aria-label="Catalog sources">
-        <CircleHelp size={17} />
-        <div>
-          <p>
-            Roster and player biographies sourced from{" "}
-            <ExternalAnchor href={rosterSource}>Liquipedia</ExternalAnchor> ·
-            Checked {verifiedDate}.
-          </p>
-          <p>
-            This is a manually curated snapshot, not a live feed. Verified
-            profile images are shown where available; otherwise, players have a
-            monogram. Image credits and individual sources are in each profile.
-          </p>
-        </div>
-      </aside>
+        {filtered.length ? (
+          <div className="player-grid">
+            {filtered.map((player) => (
+              <PlayerCard key={player.id} player={player} />
+            ))}
+          </div>
+        ) : (
+          <div className="empty-state">
+            <Search size={28} />
+            <h2>No players found</h2>
+            <p>Try another player, country, or qualification route.</p>
+            <button
+              className="button button-outline"
+              onClick={() => setParams({})}
+            >
+              Reset filters
+            </button>
+          </div>
+        )}
+        <aside className="catalog-source-note" aria-label="Catalog sources">
+          <CircleHelp size={17} />
+          <div>
+            <p>
+              Roster and player biographies sourced from{" "}
+              <ExternalAnchor href={rosterSource}>Liquipedia</ExternalAnchor> ·
+              Checked {verifiedDate}.
+            </p>
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }
@@ -582,43 +412,12 @@ function Login() {
   }, []);
   if (!loading && user) return <Navigate to="/" replace />;
   return (
-    <section className="login-page container">
-      <Link to="/" className="back-link">
-        <ArrowLeft size={15} />
-        Back to overview
-      </Link>
+    <section className="login-page" aria-labelledby="login-title">
       <div className="login-layout">
-        <div className="login-intro">
-          <span className="eyebrow gold">
-            WELCOME TO YOUR SIDE OF THE ARENA
-          </span>
-          <h1>
-            Good picks.
-            <br />
-            <span>Great company.</span>
-          </h1>
-          <p>
-            A fantasy league for people who know that the best matches are the
-            ones you’re invested in.
-          </p>
-          <div className="login-intro-detail">
-            <span className="step-icon">
-              <Crown size={25} />
-            </span>
-            <div>
-              <strong>One world stage. Your perspective.</strong>
-              <span>CRL 2026 World Finals · Shanghai</span>
-            </div>
-          </div>
-        </div>
         <div className="login-card">
-          <span className="login-icon">
-            <DiscordIcon size={31} />
-          </span>
-          <h2>Take your seat.</h2>
-          <p>
-            Sign in with Discord to get your profile ready for Royale Fantasy.
-          </p>
+          <img className="login-crest" src="/royale-shield.svg" alt="" width="48" height="48" />
+          <h1 id="login-title">Sign in to<br /><span>Royale Fantasy.</span></h1>
+          <SessionNotice />
           {error && (
             <div className="login-error" role="alert">
               {loginErrors[error] ||
@@ -638,24 +437,17 @@ function Login() {
             {leaving ? "Opening Discord…" : "Continue with Discord"}
             <ExternalLink size={15} />
           </a>
-          <div className="login-security">
-            <ShieldCheck size={15} />
-            <span>Secure sign-in. No new password.</span>
-          </div>
-          <div className="login-permissions">
-            <p>Just the essentials.</p>
-            <span>
-              We only request your public Discord profile: your name, avatar,
-              and user ID. We never access your messages, servers, or email.
-            </span>
-          </div>
-          <p className="login-footnote">
-            Not ready to sign in?{" "}
-            <Link to="/players">
-              Explore the player catalog
-              <ArrowRight size={12} />
-            </Link>
-          </p>
+          <section className="login-security" aria-labelledby="login-security-title">
+            <h2 id="login-security-title">
+              <ShieldCheck size={17} aria-hidden="true" />
+              Your privacy
+            </h2>
+            <ul>
+              <li>Your password stays with Discord.</li>
+              <li>Only your name, avatar and ID are shared.</li>
+              <li>Your messages and email stay private.</li>
+            </ul>
+          </section>
         </div>
       </div>
     </section>
@@ -680,7 +472,11 @@ export default function App() {
   const { pathname } = useLocation();
   useEffect(() => {
     document.title = `${pathname === "/players" ? "Player catalog" : pathname === "/login" ? "Sign in" : "Your roster. Their moment."} — Royale Fantasy`;
-    window.scrollTo(0, 0);
+    if (pathname === "/" && window.location.hash === "#how-it-works") {
+      document.getElementById("how-it-works")?.scrollIntoView();
+    } else {
+      window.scrollTo(0, 0);
+    }
   }, [pathname]);
   return (
     <>
@@ -688,7 +484,7 @@ export default function App() {
         Skip to content
       </a>
       <Header />
-      <SessionNotice />
+      {pathname !== "/login" && <SessionNotice />}
       <main id="main">
         <Routes>
           <Route path="/" element={<Home />} />

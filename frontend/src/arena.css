@@ -1,0 +1,231 @@
+@font-face {
+  font-family: "Archivo Black";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/archivo-black.ttf") format("truetype");
+}
+
+.arena-header {
+  border-bottom: 1px solid #324866;
+}
+.arena-header .header-inner {
+  min-height: 68px;
+  max-width: 1296px;
+  padding-block: 12px;
+}
+.arena-header .brand-light { color: #ffc457; font-weight: 700; }
+.arena-header .nav-link { color: #e0e8f2; font-weight: 650; }
+.arena-header .nav-link.active { color: #ffd477; }
+.arena-header .nav-link.active::after { bottom: -7px; }
+.arena-header .button-discord {
+  color: #13223a;
+  background: linear-gradient(#ffdc82, #ffbc4b);
+  border-color: #ffe2a3;
+}
+.arena-hero {
+  color: white;
+  background-color: #122943;
+  --overview-art: url("/overview-larry.webp");
+  background-image: linear-gradient(90deg, #102b48ca, #112d49b8 28%, #112d4933 52%, transparent 68%), var(--overview-art);
+  background-position: center, right center;
+  background-size: cover;
+  border-bottom: 2px solid #bc914e;
+  padding-bottom: clamp(20px, 3vw, 38px);
+}
+.arena-inner {
+  max-width: 1296px;
+  margin-inline: auto;
+  padding: clamp(72px, 6.9vw, 114px) 40px clamp(28px, 3.5vw, 52px);
+}
+.arena-hero h1, #guide-title {
+  font-family: "Archivo Black", "Inter Variable", sans-serif;
+  font-weight: 400;
+}
+.arena-hero h1 {
+  margin: 0;
+  font-size: clamp(53px, 5.55vw, 91px);
+  line-height: .99;
+  letter-spacing: -.065em;
+  text-shadow: 0 3px #a8afbd, 0 6px 0 #17263b, 0 8px 16px #06132791;
+}
+.arena-hero h1 span {
+  color: #ffca57;
+  text-shadow: 0 3px #bd771b, 0 6px 0 #342312, 0 8px 16px #06132791;
+}
+.arena-intro {
+  max-width: 410px;
+  margin: 22px 0 26px;
+  font-size: clamp(15px, 1.2vw, 19px);
+  line-height: 1.55;
+  text-shadow: 0 1px 5px #07142a;
+}
+.arena-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  min-height: 52px;
+  padding: 12px 27px;
+  border: 1px solid #ffe9a9;
+  border-radius: 9px;
+  box-shadow: inset 0 2px #fff4c776, 0 3px 0 #a66c23, 0 6px 16px #07101c80;
+  background: linear-gradient(#ffde84, #f8ac38);
+  color: #271c0b;
+  font-size: 16px;
+  font-weight: 800;
+}
+.arena-cta:hover { background: linear-gradient(#ffe9a5, #ffbf52); }
+.finals-strip {
+  color: #f7f9fe;
+  width: min(92%, 1000px);
+  margin-inline: auto;
+  padding: 18px clamp(14px, 2.3vw, 32px);
+  border: 1px solid #546a81;
+  border-radius: 14px;
+  background: linear-gradient(115deg, #182f49ed, #0e2139f5);
+  box-shadow: 0 7px 20px #05152966;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: clamp(20px, 4vw, 64px);
+  align-items: center;
+}
+.finals-identity { display: flex; align-items: center; gap: 12px; }
+.finals-crest {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 50px;
+  border-radius: 9px 9px 19px 19px;
+  border: 1px solid #d2a85e;
+  background: linear-gradient(150deg, #28577d, #10263e);
+  color: #ffd477;
+}
+.finals-identity p, .finals-facts dt {
+  margin: 0 0 4px;
+  color: #c2d1e2;
+  font-size: 11px;
+  line-height: 1.3;
+}
+.finals-identity p { color: #ffdb8f; font-weight: 650; }
+.finals-identity h2 {
+  margin: 0;
+  font: 400 clamp(20px, 2vw, 26px)/1.1 "Archivo Black", sans-serif;
+  letter-spacing: -.045em;
+}
+.finals-facts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin: 0;
+}
+.finals-facts div { padding-inline-start: clamp(12px, 2vw, 32px); border-inline-start: 1px solid #546c866b; }
+.finals-facts dd { margin: 0; font: 700 clamp(17px, 1.65vw, 23px)/1.15 var(--heading); }
+.finals-details {
+  min-height: 44px;
+  font-weight: 650;
+  font-size: 13px;
+  color: #ffda88;
+  white-space: nowrap;
+}
+@media (max-width: 760px) {
+  .finals-strip { grid-template-columns: 1fr auto; gap: 14px 8px; padding-block: 17px; }
+  .finals-identity { gap: 9px; }
+  .finals-crest { width: 36px; height: 42px; }
+  .finals-details { grid-column: 2; grid-row: 1; font-size: 12px; }
+  .finals-facts { grid-column: 1 / -1; border-top: 1px solid #546c866b; padding-top: 13px; }
+  .finals-facts div:first-child { border: 0; padding: 0; }
+}
+.arena-guide {
+  padding: 34px 0 48px;
+  text-align: center;
+  color: #f7f9fe;
+  background: linear-gradient(#0c203a, #09182c);
+}
+.arena-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 17px;
+  margin-bottom: 9px;
+  color: #ffcb65;
+}
+.arena-divider::before, .arena-divider::after {
+  content: "";
+  width: 64px;
+  height: 1px;
+  background: #bc924e;
+}
+#guide-title {
+  margin-bottom: 8px;
+  font-size: clamp(28px, 3vw, 45px);
+  line-height: 1.1;
+  letter-spacing: -.055em;
+}
+.guide-intro, .how-grid p {
+  margin: 0;
+  color: #c3d4e8;
+  font-size: 15px;
+  line-height: 1.55;
+}
+.how-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 30px;
+  text-align: left;
+}
+.how-grid article {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: clamp(20px, 2vw, 28px);
+  border: 1px solid #38516b;
+  border-radius: 10px;
+  background: linear-gradient(140deg, #172f49, #0e233b);
+}
+.how-grid .step-icon {
+  color: #ffd477;
+  border-color: #8e744c;
+  background: #1c3750;
+}
+.how-grid .step-number {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  color: #9fb3c9;
+  font: 500 13px var(--heading);
+}
+.how-grid h3 { margin: 22px 0 9px; font-size: 20px; }
+.how-grid p { margin-bottom: 20px; font-size: 14px; }
+.how-grid .inline-link, .how-grid .coming-label {
+  display: inline-flex;
+  align-items: center;
+  margin-top: auto;
+  min-height: 34px;
+  font-size: 12px;
+}
+.how-grid .inline-link { color: #ffcf70; font-weight: 650; }
+.how-grid .inline-link:hover { text-decoration: underline; }
+.how-grid .coming-label { color: #a7bacd; }
+@media (max-width: 740px) {
+  .arena-inner {
+    padding: 185px 22px 40px;
+  }
+  .arena-hero {
+    --art-height: clamp(230px, 52vw, 350px);
+    background-color: #10253a;
+    background-image: linear-gradient(to bottom, transparent 100px, #10253ab8 182px, #10253a var(--art-height)), var(--overview-art);
+    background-position: center top, right top;
+    background-size: 100% 100%, auto var(--art-height);
+    background-repeat: no-repeat;
+  }
+  .arena-hero h1 { font-size: clamp(42px, 9.5vw, 65px); }
+  .arena-intro { margin: 16px 0 21px; max-width: 380px; }
+  .arena-header .header-inner { row-gap: 8px; }
+  .arena-header nav { padding-block: 0 2px; }
+  .arena-header .nav-link { min-height: 28px; }
+  .arena-header .nav-link.active::after { bottom: 0; }
+  .arena-guide { padding: 28px 0 36px; }
+  .how-grid { grid-template-columns: 1fr; gap: 12px; margin-top: 24px; }
+}

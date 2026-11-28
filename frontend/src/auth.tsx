@@ -20,7 +20,7 @@ type AuthContextValue = {
   user: User | null;
   loading: boolean;
   loggingOut: boolean;
-  error: string | null;
+  error: "session" | "logout" | null;
   refresh: () => Promise<void>;
   logout: () => Promise<void>;
 };
@@ -31,7 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<AuthContextValue["error"]>(null);
   const currentRequest = useRef<AbortController | null>(null);
   const mutatingSession = useRef(false);
 
@@ -65,9 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         controller === currentRequest.current &&
         (!controller.signal.aborted || controller.signal.reason === "timeout")
       ) {
-        setError(
-          "We couldn’t reach the login service. You can still explore all players.",
-        );
+        setError("session");
       }
     } finally {
       window.clearTimeout(timeout);
@@ -92,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       setError(null);
     } catch {
-      setError("We couldn’t sign you out. Please try again.");
+      setError("logout");
     } finally {
       mutatingSession.current = false;
       setLoggingOut(false);
