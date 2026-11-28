@@ -179,7 +179,6 @@ function Home() {
     <>
       <section className="arena-hero" aria-labelledby="arena-title">
         <div className="arena-inner">
-          <p className="arena-eyebrow">Clash Royale League · World Finals 2026</p>
           <h1 id="arena-title">Your roster. <br /><span>Their moment.</span></h1>
           <p className="arena-intro">
             Sixteen finalists. One crown. Scout the pros on the road to Shanghai
@@ -242,7 +241,7 @@ function Home() {
             </article>
             <article>
               <span className="step-icon">
-                <Trophy size={21} aria-hidden="true" />
+                <Crown size={21} aria-hidden="true" />
               </span>
               <span className="step-number">03</span>
               <h3>Follow every crown</h3>
@@ -322,7 +321,6 @@ function Catalog() {
     <div className="catalog-page">
       <header className="catalog-banner">
         <div className="container">
-          <p className="arena-eyebrow">CRL World Finals · Shanghai 2026</p>
           <h1>Meet the <span>finalists.</span></h1>
           <p>Explore the players and discover how they earned their place in the arena.</p>
         </div>
@@ -385,11 +383,6 @@ function Catalog() {
               Roster and player biographies sourced from{" "}
               <ExternalAnchor href={rosterSource}>Liquipedia</ExternalAnchor> ·
               Checked {verifiedDate}.
-            </p>
-            <p>
-              This is a manually curated snapshot, not a live feed. Verified
-              profile images are shown where available; otherwise, players have a
-              monogram. Image credits and individual sources are in each profile.
             </p>
           </div>
         </aside>

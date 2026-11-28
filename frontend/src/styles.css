@@ -502,12 +502,12 @@ main {
   color: #f3f6fc;
 }
 .catalog-banner {
-  background: linear-gradient(90deg, #07192ff2 8%, #091c35df 32%, #0923454a 68%, #071a3315),
-    url("/royal-arena.webp") center 40% / cover;
+  --catalog-art: url("/players-blue-king.webp");
+  background: linear-gradient(90deg, #09172c 32%, transparent 65%),
+    var(--catalog-art) right center / auto 100% no-repeat #09172c;
   border-bottom: 2px solid #b99152;
 }
 .catalog-banner .container { padding-block: clamp(36px, 4.2vw, 66px); }
-.catalog-banner .arena-eyebrow { margin-bottom: 10px; color: #ffe3a7; }
 .catalog-banner h1 {
   margin: 0 0 12px;
   font: 400 clamp(40px, 5.1vw, 75px)/1.06 "Archivo Black", sans-serif;
@@ -522,7 +522,7 @@ main {
   font-size: 15px;
   line-height: 1.55;
 }
-.catalog-field { padding-block: 28px 48px; }
+.catalog-field { padding-block: 28px 12px; }
 
 .catalog-toolbar {
   display: flex;
@@ -741,8 +741,8 @@ main {
   align-items: start;
   gap: 10px;
   border-top: 1px solid var(--line);
-  padding-top: 22px;
-  margin-top: 30px;
+  padding-top: 12px;
+  margin-top: 16px;
   color: #8a94a4;
   font-size: 10px;
   line-height: 1.8;
@@ -752,7 +752,7 @@ main {
   color: #7c8593;
 }
 .catalog-source-note p {
-  margin-bottom: 6px;
+  margin: 0;
 }
 .catalog-source-note .external-link {
   color: #bdad81;
@@ -848,8 +848,9 @@ main {
   flex: 1;
   display: grid;
   align-items: center;
-  background: linear-gradient(90deg, #071529df, #0c203688 45%, #0c20361a 82%),
-    url("/royal-arena.webp") center / cover;
+  --gate-art: url("/sign-in-guard.webp");
+  background: linear-gradient(90deg, #07152987, #0c203647 48%, transparent 78%),
+    var(--gate-art) right center / cover no-repeat #10243a;
 }
 main:has(> .login-page) { display: flex; }
 .login-layout {
@@ -926,9 +927,12 @@ main:has(> .login-page) { display: flex; }
 .login-card .session-notice { justify-content: center; align-items: center; flex-wrap: wrap; gap: 3px 10px; }
 @media (max-width: 740px) {
   .login-page {
-    background: linear-gradient(0deg, #091c30ef, #10283d40 75%), url("/royal-arena.webp") 70% center / cover;
+    --gate-height: clamp(170px, 42vw, 230px);
+    background-image: linear-gradient(to bottom, transparent calc(var(--gate-height) * .76), #10243a var(--gate-height)), var(--gate-art);
+    background-size: 100% 100%, max(100%, calc(var(--gate-height) * 1.78)) auto;
+    background-position: center top, right 0 top 0;
   }
-  .login-layout { padding: 32px 16px; }
+  .login-layout { padding: var(--gate-height) 16px 32px; }
 }
 .not-found {
   text-align: center;
@@ -1010,10 +1014,12 @@ main:has(> .login-page) { display: flex; }
     display: none;
   }
   .catalog-banner {
-    background-image: linear-gradient(90deg, #071a32f2, #071a32bd 64%, #071a3259), url("/royal-arena.webp");
-    background-position: 65% center;
+    --catalog-art-height: clamp(145px, 31vw, 190px);
+    background-image: linear-gradient(to bottom, transparent calc(var(--catalog-art-height) - 35px), #09172c var(--catalog-art-height)), var(--catalog-art);
+    background-size: 100% 100%, auto var(--catalog-art-height);
+    background-position: center top, right top;
   }
-  .catalog-banner .container { padding-block: 32px; }
+  .catalog-banner .container { padding-block: var(--catalog-art-height) 24px; }
   .catalog-banner p:last-child { max-width: 310px; }
   .catalog-toolbar {
     flex-wrap: wrap;
