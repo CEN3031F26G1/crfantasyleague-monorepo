@@ -88,3 +88,9 @@ DISCORD_REDIRECT_URL=https://fantasy.example.com/auth/callback
 Register the production callback with Discord. The backend automatically enables Secure cookies when the callback URL is HTTPS. Terminate TLS at your reverse proxy, keep the private key and client secret server-side, and preserve the request Origin header. Avoid cross-site frontend/API deployments without redesigning the cookie and CSRF policy. `npm run preview` is only a static build preview, not the configured authenticated development server.
 
 Design references RoyaleTools' compact tool-oriented navigation and card layouts without copying its branding, source code, or art.
+
+## Landing page design
+
+The arena illustration places the World Finals setting on the right and reserves the shaded grandstand for the headline. On narrow screens the castle sits above the text. The gold primary action opens the public player catalog. The guide below it distinguishes scouting features from planned drafting and scoring.
+
+The home palette pairs navy (#091C35) with crown gold (#FFCA57). Local Archivo Black sets the main headings, Inter sets body copy, and Space Grotesk sets supporting headings. The original arena illustration was generated with ImageGen and optimized as `public/royal-arena.webp`. Archivo Black and its SIL Open Font License are in `public/fonts/`.

@@ -11,7 +11,7 @@ import {
 import * as Avatar from "@radix-ui/react-avatar";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
-  ArrowDown,
+  Swords,
   ArrowLeft,
   ArrowRight,
   Check,
@@ -19,17 +19,15 @@ import {
   CircleHelp,
   Crown,
   ExternalLink,
-  Globe2,
   Layers3,
   LogOut,
-  MapPin,
   Search,
   ShieldCheck,
-  Sparkles,
   Trophy,
   Users,
   X,
 } from "lucide-react";
+import "./arena.css";
 import { useAuth } from "./auth";
 import {
   DiscordIcon,
@@ -110,8 +108,9 @@ function AccountMenu() {
 }
 
 function Header() {
+  const home = useLocation().pathname === "/";
   return (
-    <header className="site-header">
+    <header className={home ? "site-header arena-header" : "site-header"}>
       <div className="header-inner">
         <Link to="/" aria-label="Royale Fantasy home">
           <Logo />
@@ -126,6 +125,7 @@ function Header() {
           >
             Overview
           </NavLink>
+          {home && <a href="#how-it-works" className="nav-link">How it works</a>}
           <NavLink
             to="/players"
             className={({ isActive }) =>
@@ -187,201 +187,46 @@ function SessionNotice() {
   );
 }
 
-function HeroRoster() {
-  const featured = [players[0], players[4], players[10]];
-  return (
-    <div
-      className="hero-art"
-      aria-label="A preview of the World Finals player pool"
-    >
-      <div className="arena-orbit orbit-one" />
-      <div className="arena-orbit orbit-two" />
-      <div className="arena-star star-one">✦</div>
-      <div className="arena-star star-two">✦</div>
-      <div className="roster-preview">
-        <div className="preview-top">
-          <span>
-            <Layers3 size={15} /> THE PLAYER POOL
-          </span>
-          <span className="preview-dots">•••</span>
-        </div>
-        <div className="preview-heading">
-          <span>
-            World-class talent.
-            <br />
-            <strong>Your next roster.</strong>
-          </span>
-          <span className="preview-crown">
-            <Crown size={31} strokeWidth={1.4} />
-          </span>
-        </div>
-        {featured.map((player, index) => (
-          <div className="preview-player" key={player.id}>
-            <span className="preview-rank">0{index + 1}</span>
-            <PlayerPortrait player={player} className="preview-portrait" />
-            <div>
-              <strong>{player.name}</strong>
-              <span>
-                <Flag player={player} />
-                {player.country}
-              </span>
-            </div>
-            <ShieldCheck size={18} className="preview-verified" />
-          </div>
-        ))}
-        <Link to="/players" className="preview-bottom">
-          <span>Meet all 16 finalists</span>
-          <ArrowRight size={16} />
-        </Link>
-      </div>
-      <div className="floating-ticket">
-        <span className="ticket-icon">
-          <Trophy size={19} />
-        </span>
-        <div>
-          <strong>Shanghai, 2026</strong>
-          <span>The world stage is set.</span>
-        </div>
-        <span className="ticket-dot" />
-      </div>
-    </div>
-  );
-}
+const scoutingSteps = [
+  { icon: Swords, title: "Meet the pros", detail: "Explore all 16 World Finals contenders." },
+  { icon: Crown, title: "Scout your picks", detail: "Discover each player’s path to the finals." },
+  { icon: Layers3, title: "Draft your team", detail: "Roster building is coming soon." },
+  { icon: Trophy, title: "Compete in leagues", detail: "Fantasy scoring and standings are on the way." },
+];
 
 function Home() {
   return (
     <>
-      <section className="hero container">
-        <div className="hero-copy">
-          <div className="event-pill">
-            <span className="live-dot" />
-            CRL WORLD FINALS 2026
-            <span className="pill-divider" />
-            FANTASY LEAGUE
-          </div>
-          <h1>
-            Your roster. <br />
-            Their <span>moment.</span>
-          </h1>
-          <p className="hero-description">
-            You know the players. Now back your picks.
-            <br className="desktop-only" /> Build your dream team from the best
-            in Clash Royale and make every match mean more.
+      <section className="arena-hero" aria-labelledby="arena-title">
+        <div className="arena-inner">
+          <p className="arena-eyebrow">Clash Royale League · World Finals 2026</p>
+          <h1 id="arena-title">Your roster. <br /><span>Their moment.</span></h1>
+          <p className="arena-intro">
+            Sixteen finalists. One crown. Scout the pros on the road to Shanghai
+            and find the players you’ll be cheering for.
           </p>
-          <div className="hero-actions">
-            <Link to="/players" className="button button-gold">
-              Explore the players
-              <ArrowRight size={17} />
+          <div className="arena-actions">
+            <Link to="/players" className="arena-cta">
+              Explore the players <ArrowRight size={20} aria-hidden="true" />
             </Link>
-            <a href="#how-it-works" className="button button-text">
-              How it works
-              <ArrowDown size={15} />
-            </a>
           </div>
-          <div className="hero-reassurance">
-            <Globe2 size={14} />
-            Open player catalog<span>·</span>No account needed
-          </div>
-        </div>
-        <HeroRoster />
-      </section>
-      <section
-        className="event-strip container"
-        aria-label="World Finals details"
-      >
-        <div className="event-strip-title">
-          <span className="event-strip-icon">
-            <Trophy size={22} />
-          </span>
-          <div>
-            <span className="eyebrow">THE BIGGEST STAGE</span>
-            <strong>CRL 2026 World Finals</strong>
-          </div>
-        </div>
-        <div className="event-stat">
-          <strong>16</strong>
-          <span>qualified players</span>
-        </div>
-        <div className="event-stat">
-          <strong>6–8 Nov</strong>
-          <span>2026 World Finals</span>
-        </div>
-        <div className="event-stat">
-          <strong>
-            <MapPin size={15} />
-            Shanghai
-          </strong>
-          <span>one world champion</span>
-        </div>
-        <ExternalAnchor href={rosterSource} className="event-source">
-          Event details
-        </ExternalAnchor>
-      </section>
-      <section className="how-section container" id="how-it-works">
-        <div className="section-heading">
-          <div>
-            <span className="eyebrow gold">FANTASY, WITHOUT THE FRICTION</span>
-            <h2>A new way to watch the finals.</h2>
-          </div>
-          <span className="subtle-pill">
-            <Sparkles size={13} />
-            Team building coming soon
-          </span>
-        </div>
-        <div className="how-grid">
-          <article>
-            <span className="step-icon">
-              <Search size={21} />
-            </span>
-            <span className="step-number">01</span>
-            <h3>Know your contenders</h3>
-            <p>
-              Explore every qualified player, their background, and their road
-              to the World Finals.
-            </p>
-            <Link to="/players" className="inline-link">
-              Browse the catalog
-              <ArrowRight size={14} />
-            </Link>
-          </article>
-          <article>
-            <span className="step-icon">
-              <Users size={21} />
-            </span>
-            <span className="step-number">02</span>
-            <h3>Make it your team</h3>
-            <p>
-              Pick the players you believe in. Put your Clash Royale knowledge
-              behind a roster of your own.
-            </p>
-            <span className="coming-label">Coming soon</span>
-          </article>
-          <article>
-            <span className="step-icon">
-              <Trophy size={21} />
-            </span>
-            <span className="step-number">03</span>
-            <h3>Follow every crown</h3>
-            <p>
-              Cheer for your picks on the world stage. Fantasy scoring and
-              league competition are on the way.
-            </p>
-            <span className="coming-label">Coming soon</span>
-          </article>
         </div>
       </section>
-      <section className="catalog-callout container">
-        <div>
-          <span className="eyebrow gold">
-            16 PLAYERS. ENDLESS POSSIBILITIES.
-          </span>
-          <h2>Great teams start with a little scouting.</h2>
-          <p>Meet the full field before you make your picks.</p>
+      <section className="arena-guide" id="how-it-works" aria-labelledby="guide-title">
+        <div className="container">
+          <div className="arena-divider" aria-hidden="true"><Crown size={24} /></div>
+          <h2 id="guide-title">How fantasy works</h2>
+          <p className="guide-intro">Get to know the field before you draft your first team.</p>
+          <ul className="scouting-steps">
+            {scoutingSteps.map(({ icon: Icon, title, detail }) => (
+              <li key={title}>
+                <span className="arena-emblem"><Icon size={28} aria-hidden="true" /></span>
+                <h3>{title}</h3>
+                <p>{detail}</p>
+              </li>
+            ))}
+          </ul>
         </div>
-        <Link to="/players" className="button button-outline">
-          Meet the finalists
-          <ArrowRight size={17} />
-        </Link>
       </section>
     </>
   );
@@ -688,7 +533,7 @@ export default function App() {
         Skip to content
       </a>
       <Header />
-      <SessionNotice />
+      {pathname !== "/" && <SessionNotice />}
       <main id="main">
         <Routes>
           <Route path="/" element={<Home />} />
@@ -697,6 +542,7 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
+      {pathname === "/" && <SessionNotice />}
       <Footer />
     </>
   );

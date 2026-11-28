@@ -1,0 +1,165 @@
+@font-face {
+  font-family: "Archivo Black";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/archivo-black.ttf") format("truetype");
+}
+
+.arena-header {
+  background: #091c35;
+  border-bottom: 1px solid #324866;
+}
+.arena-header .header-inner {
+  min-height: 68px;
+  max-width: 1296px;
+  padding-block: 12px;
+}
+.arena-header .brand-light { color: #ffc457; font-weight: 700; }
+.arena-header .brand-mark {
+  background: linear-gradient(145deg, #185d9f, #0a284c);
+  color: #ffd169;
+  border: 2px solid #ddb15d;
+  border-radius: 9px 9px 15px 15px;
+}
+.arena-header .nav-link { color: #e0e8f2; font-weight: 650; }
+.arena-header .nav-link.active { color: #ffd477; }
+.arena-header .nav-link.active::after { bottom: -7px; }
+.arena-header .button-discord {
+  color: #13223a;
+  background: linear-gradient(#ffdc82, #ffbc4b);
+  border-color: #ffe2a3;
+}
+.arena-hero {
+  color: white;
+  background-color: #122943;
+  background-image: linear-gradient(90deg, #041225cc, #06152e8a 31%, transparent 65%), url("/royal-arena.webp");
+  background-position: center;
+  background-size: cover;
+  border-bottom: 2px solid #bc914e;
+}
+.arena-inner {
+  max-width: 1296px;
+  margin-inline: auto;
+  padding: clamp(72px, 6.9vw, 114px) 40px clamp(74px, 7vw, 124px);
+}
+.arena-eyebrow {
+  margin: 0 0 17px;
+  font-size: clamp(10px, .9vw, 13px);
+  font-weight: 750;
+  letter-spacing: .17em;
+  text-transform: uppercase;
+  color: #e4ecf8;
+}
+.arena-hero h1, .arena-guide h2 {
+  font-family: "Archivo Black", "Inter Variable", sans-serif;
+  font-weight: 400;
+}
+.arena-hero h1 {
+  margin: 0;
+  font-size: clamp(53px, 5.55vw, 91px);
+  line-height: .99;
+  letter-spacing: -.065em;
+  text-shadow: 0 3px #a8afbd, 0 6px 0 #17263b, 0 8px 16px #06132791;
+}
+.arena-hero h1 span {
+  color: #ffca57;
+  text-shadow: 0 3px #bd771b, 0 6px 0 #342312, 0 8px 16px #06132791;
+}
+.arena-intro {
+  max-width: 410px;
+  margin: 22px 0 26px;
+  font-size: clamp(15px, 1.2vw, 19px);
+  line-height: 1.55;
+  text-shadow: 0 1px 5px #07142a;
+}
+.arena-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  min-height: 52px;
+  padding: 12px 27px;
+  border: 1px solid #ffe9a9;
+  border-radius: 9px;
+  box-shadow: inset 0 2px #fff4c776, 0 3px 0 #a66c23, 0 6px 16px #07101c80;
+  background: linear-gradient(#ffde84, #f8ac38);
+  color: #271c0b;
+  font-size: 16px;
+  font-weight: 800;
+}
+.arena-cta:hover { background: linear-gradient(#ffe9a5, #ffbf52); }
+.arena-guide {
+  padding: 34px 0 48px;
+  text-align: center;
+  color: #f7f9fe;
+  background: radial-gradient(ellipse at 50% 0%, #19385b, #0c203a 52%, #09182c);
+}
+.arena-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 17px;
+  margin-bottom: 9px;
+  color: #ffcb65;
+}
+.arena-divider::before, .arena-divider::after {
+  content: "";
+  width: 64px;
+  height: 1px;
+  background: #bc924e;
+}
+.arena-guide h2 {
+  margin-bottom: 8px;
+  font-size: clamp(28px, 3vw, 45px);
+  line-height: 1.1;
+  letter-spacing: -.055em;
+}
+.guide-intro, .scouting-steps p {
+  margin: 0;
+  color: #c3d4e8;
+  font-size: 15px;
+  line-height: 1.5;
+}
+.scouting-steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin: 36px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.scouting-steps li { padding: 0 19px; }
+.scouting-steps li + li { border-inline-start: 1px solid #49678570; }
+.arena-emblem {
+  display: inline-grid;
+  place-items: center;
+  width: 49px;
+  height: 49px;
+  margin-bottom: 12px;
+  color: #ffcd69;
+  background: linear-gradient(145deg, #254765, #0a1a2f);
+  border: 1px solid #557696;
+  border-radius: 11px;
+  box-shadow: inset 0 1px #a3c9e638;
+}
+.scouting-steps h3 { margin: 0 0 5px; font-size: 18px; }
+.scouting-steps p { font-size: 13px; }
+@media (max-width: 740px) {
+  .arena-inner {
+    padding: 185px 22px 40px;
+  }
+  .arena-hero {
+    background-image: linear-gradient(0deg, #07162b 1%, #07162bd6 30%, #07162b15 76%), url("/royal-arena.webp");
+    background-position: 70% center;
+  }
+  .arena-hero h1 { font-size: clamp(42px, 9.5vw, 65px); }
+  .arena-intro { margin: 16px 0 21px; max-width: 380px; }
+  .arena-header .header-inner { row-gap: 8px; }
+  .arena-header nav { padding-block: 0 2px; }
+  .arena-header .nav-link { min-height: 28px; }
+  .arena-header .nav-link.active::after { bottom: 0; }
+  .arena-guide { padding: 28px 0 36px; }
+  .scouting-steps { grid-template-columns: repeat(2, 1fr); row-gap: 27px; margin-top: 28px; }
+  .scouting-steps li { padding: 0 8px; }
+  .scouting-steps li:nth-child(odd) { border-inline-start: 0; }
+}
